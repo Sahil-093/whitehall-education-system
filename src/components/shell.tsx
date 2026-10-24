@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { DRIVE_FOLDER_URL } from "@/lib/school-links";
 import { useSchool } from "./school-context";
 
 const LINKS = [
   ["/", "Overview"],
+  ["/admission", "Admission"],
   ["/students", "Students"],
   ["/attendance", "Attendance"],
   ["/fees", "Fees"],
@@ -56,6 +58,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {label}
             </Link>
           ))}
+          <a className="nav-link" href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
+            Drive
+          </a>
         </nav>
         <p className="side-foot">
           {school.loading ? "Opening the register" : "Saved in this browser"}
@@ -65,8 +70,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="main">
         {!school.loading && normalize(pathname) !== "/settings" ? (
           <p className="notice">
-            The register stays in this browser. It is not stored on GitHub.{" "}
-            <Link href="/settings">Download a backup</Link> before clearing the browser.
+            {normalize(pathname) === "/admission"
+              ? "This admission is saved on the Google Sheet. Papers stay in the school Drive folder."
+              : "The register stays in this browser. It is not stored on GitHub."}{" "}
+            <Link href="/settings">School files and backup</Link>.
           </p>
         ) : null}
         {!school.loading && school.error ? <p className="notice warn">{school.error}</p> : null}

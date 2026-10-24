@@ -72,7 +72,7 @@ export default function OverviewPage() {
               <Link className="btn secondary" href="/classes">
                 Add classes
               </Link>
-              <Link className="btn" href="/students">
+              <Link className="btn" href="/admission">
                 New admission
               </Link>
             </div>

@@ -1,37 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
-import {
-  classLabel,
-  classOptions,
-  compareClass,
-  displayDate,
-  money,
-  nextSerial,
-  todayParts,
-  uid,
-} from "@/lib/format";
+import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
 import type { Student } from "@/lib/types";
-
-const blankStudent = (admissionNo: string): Student => ({
-  id: "",
-  admissionNo,
-  name: "",
-  fatherName: "",
-  gender: "",
-  dateOfBirth: "",
-  className: "",
-  section: "A",
-  rollNo: "",
-  phone: "",
-  address: "",
-  admissionDate: todayParts().iso,
-  monthlyFee: "",
-  status: "Active",
-  notes: "",
-});
 
 export default function StudentsPage() {
   const school = useSchool();
@@ -56,10 +30,6 @@ export default function StudentsPage() {
       .sort((a, b) => compareClass(a, b) || a.name.localeCompare(b.name));
   }, [school.students, query, classFilter, status]);
 
-  function openNew() {
-    setEditor(blankStudent(nextSerial(school.students.map((student) => student.admissionNo), "WH-", 3)));
-  }
-
   async function removeStudent(student: Student) {
     const confirmed = window.confirm(
       `Remove ${student.name} from the current register? Past attendance and fee receipts stay as they are.`,
@@ -75,9 +45,9 @@ export default function StudentsPage() {
         title="Students"
         lede="One line in the register for every child at the Karak campus."
         action={
-          <button type="button" className="btn" onClick={openNew}>
+          <Link className="btn" href="/admission">
             New admission
-          </button>
+          </Link>
         }
       />
       <div className="filters no-print">
@@ -113,9 +83,9 @@ export default function StudentsPage() {
           }
           action={
             school.students.length === 0 ? (
-              <button type="button" className="btn" onClick={openNew}>
+              <Link className="btn" href="/admission">
                 New admission
-              </button>
+              </Link>
             ) : null
           }
         />

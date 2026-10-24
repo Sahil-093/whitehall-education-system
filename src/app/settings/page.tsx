@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Field, PageHead } from "@/components/ui";
 import { backupRegister } from "@/lib/browser-register";
+import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL } from "@/lib/school-links";
 import type { SchoolSettings } from "@/lib/types";
 
 export default function SettingsPage() {
@@ -70,16 +71,21 @@ export default function SettingsPage() {
           <p className="page-kicker">This browser</p>
           <h2>Backup</h2>
           <p>
-            Admissions, fees, aur attendance is browser mein save hote hain. GitHub par students ka data nahi
-            jata. Browser clear karne se register khatam ho sakta hai, is liye backup rakhain.
+            Fees aur attendance is browser mein rehte hain. Nayi admission Google Sheet par likhi jati hai
+            ({ADMISSION_ACCOUNT}). Browser clear karne se local register khatam ho sakta hai, is liye backup
+            rakhain.
           </p>
           <p>
-            Google Sheet:{" "}
-            <a href={school.spreadsheetUrl} target="_blank" rel="noreferrer">
-              Whitehall Education System - Karak
+            Admission sheet:{" "}
+            <a href={ADMISSION_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Admission Form (Responses)
             </a>
-            . GitHub Pages us Sheet mein khud nahi likh sakta, kyunke private key public website par nahi rakh
-            sakte.
+          </p>
+          <p>
+            School Drive:{" "}
+            <a href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
+              Whitehall Education System
+            </a>
           </p>
           <div className="form-actions">
             <button

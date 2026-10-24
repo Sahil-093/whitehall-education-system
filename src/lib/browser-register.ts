@@ -1,10 +1,10 @@
 import { DEFAULT_SETTINGS, STANDARD_CLASSES, gradeFor, num, uid } from "./format";
+import { ADMISSION_SHEET_URL } from "./school-links";
 import type { ListResource, Row, SaveBody, SchoolPayload, SchoolSettings } from "./types";
 
 const STORAGE_KEY = "whitehall-register-v1";
 
-export const SPREADSHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1fPwgl04u7Ma0G1BXo9Ku1W0y9U0CC9KA5KKG4CAXNMA/edit";
+export const SPREADSHEET_URL = ADMISSION_SHEET_URL;
 
 type Database = {
   students: Row[];

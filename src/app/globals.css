@@ -158,7 +158,8 @@ a {
 
 .page-title,
 .empty h2,
-.drawer h2 {
+.drawer h2,
+.card h2 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
   font-weight: 520;
