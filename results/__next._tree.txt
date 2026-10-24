@@ -1,0 +1,6 @@
+:HL["/whitehall-education-system/_next/static/chunks/16pr-ja0hd1js.css","style"]
+:HL["/whitehall-education-system/_next/static/media/6873f4f49904bdbd-s.p.2adce56gso3ku.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/whitehall-education-system/_next/static/media/edb99fec956915f8-s.p.32sris142tqlb.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+2:[["children",{"s":"__PAGE__","h":160}]]
+1:[["children",{"s":"results","h":96,"c":"$Q2"}]]
+0:{"b":"O358rCpsX1knSNCisGBKg","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
