@@ -9,8 +9,6 @@ const LINKS = [
   ["/", "Overview"],
   ["/admission", "Admission"],
   ["/students", "Students"],
-  ["/attendance", "Attendance"],
-  ["/fees", "Fees"],
   ["/classes", "Classes"],
   ["/staff", "Staff"],
   ["/results", "Results"],

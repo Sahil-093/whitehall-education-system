@@ -71,7 +71,7 @@ export default function SettingsPage() {
           <p className="page-kicker">This browser</p>
           <h2>Backup</h2>
           <p>
-            Fees aur attendance is browser mein rehte hain. Nayi admission Google Sheet par likhi jati hai
+            Register ka backup is browser mein rehta hai. Nayi admission Google Sheet par likhi jati hai
             ({ADMISSION_ACCOUNT}). Browser clear karne se local register khatam ho sakta hai, is liye backup
             rakhain.
           </p>
