@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
 import { OfficeFrame } from "@/components/office-frame";
 import "./globals.css";
@@ -17,8 +17,17 @@ const display = Fraunces({
 export const metadata: Metadata = {
   title: "Whitehall Education System",
   description: "School register for Whitehall Education System, Karak, Khyber Pakhtunkhwa.",
+  applicationName: "Whitehall Education System",
   robots: { index: false, follow: false },
-  icons: { icon: "/logo-mark.png" },
+  appleWebApp: {
+    capable: true,
+    title: "Whitehall",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0c1f6b",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
