@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS, STANDARD_CLASSES, gradeFor, num, uid } from "./format";
-import { ADMISSION_SHEET_URL } from "./school-links";
+import { ADMISSION_SHEET_URL, ADMIN_EMAIL } from "./school-links";
 import type { ListResource, Row, SaveBody, SchoolPayload, SchoolSettings } from "./types";
 
 const STORAGE_KEY = "whitehall-register-v1";
@@ -69,6 +69,10 @@ function sanitize(resource: ListResource, row: Row): Row {
     if (MONEY.has(key)) clean[key] = moneyField(row[key]);
   }
   if ((resource === "students" || resource === "staff") && !clean.status) clean.status = "Active";
+  if (resource === "staff") {
+    delete clean.password;
+    if (clean.email) clean.email = clean.email.toLowerCase();
+  }
   if ((resource === "students" || resource === "classes") && !clean.section) clean.section = "A";
   if (resource === "attendance" && !["Present", "Absent", "Leave"].includes(clean.status)) clean.status = "Present";
   if (resource === "exams" && !clean.totalMarks) clean.totalMarks = "100";
@@ -196,6 +200,19 @@ function apply(db: Database, body: SaveBody) {
     }
   }
 
+  if (resource === "staff") {
+    const seen = new Set<string>();
+    for (const row of next) {
+      const email = String(row.email || "").toLowerCase();
+      if (!email) continue;
+      if (!email.includes("@")) throw new Error("Enter a valid staff email.");
+      if (email === ADMIN_EMAIL) throw new Error("That email belongs to the school office.");
+      if (seen.has(email)) throw new Error("That email is already used by another staff member.");
+      seen.add(email);
+      if (!row.passwordHash) throw new Error("Set a password for this staff login.");
+    }
+  }
+
   db[resource] = next;
   if (resource === "students") {
     const byId = new Map(next.map((row) => [row.id, row]));
@@ -208,6 +225,13 @@ function apply(db: Database, body: SaveBody) {
       }
     }
   }
+}
+
+export function activeStaffHash(email: string) {
+  const person = readDatabase().staff.find(
+    (row) => String(row.email || "").toLowerCase() === email && String(row.status || "Active") !== "Left",
+  );
+  return person?.passwordHash ? String(person.passwordHash) : "";
 }
 
 export function loadRegister() {

@@ -21,6 +21,8 @@ export type Staff = {
   name: string;
   designation: string;
   phone: string;
+  email: string;
+  passwordHash: string;
   subject: string;
   qualification: string;
   salary: string;

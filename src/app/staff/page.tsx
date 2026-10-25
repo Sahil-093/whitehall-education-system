@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
+import { sha256 } from "@/lib/admin-auth";
 import { DESIGNATIONS, displayDate, money, todayParts, uid } from "@/lib/format";
 import type { Staff } from "@/lib/types";
 
@@ -11,6 +12,8 @@ const blank = (): Staff => ({
   name: "",
   designation: "Teacher",
   phone: "",
+  email: "",
+  passwordHash: "",
   subject: "",
   qualification: "",
   salary: "",
@@ -33,7 +36,7 @@ export default function StaffPage() {
       <PageHead
         kicker="People"
         title="Staff"
-        lede="Teachers, office staff, and others on the Karak campus payroll."
+        lede="Teachers and office staff on the Karak campus. Each person signs in with the email and password saved here."
         action={
           <button type="button" className="btn" onClick={() => setEditor(blank())}>
             Add staff
@@ -50,6 +53,7 @@ export default function StaffPage() {
                 <th>Name</th>
                 <th>Role</th>
                 <th>Subject</th>
+                <th>Email</th>
                 <th>Phone</th>
                 <th>Salary</th>
                 <th>Status</th>
@@ -65,6 +69,7 @@ export default function StaffPage() {
                   </td>
                   <td>{person.designation}</td>
                   <td>{person.subject || "—"}</td>
+                  <td>{person.email || "—"}</td>
                   <td>{person.phone || "—"}</td>
                   <td className="num">{person.salary ? money(person.salary) : "—"}</td>
                   <td>
@@ -93,6 +98,7 @@ export default function StaffPage() {
 function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void }) {
   const school = useSchool();
   const [form, setForm] = useState(initial);
+  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -102,10 +108,20 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    const email = form.email.trim().toLowerCase();
+    if (!email.includes("@")) {
+      setError("Enter the staff email.");
+      return;
+    }
+    if (!password && !form.passwordHash) {
+      setError("Set a login password for this staff member.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
-      await school.upsert("staff", [{ ...form, id: form.id || uid() }]);
+      const passwordHash = password ? await sha256(password) : form.passwordHash;
+      await school.upsert("staff", [{ ...form, email, passwordHash, id: form.id || uid() }]);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Staff was not saved.");
@@ -137,6 +153,25 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
         <Field label="Phone">
           <input value={form.phone} onChange={(event) => set("phone", event.target.value)} inputMode="tel" />
         </Field>
+        <Field label="Login email">
+          <input
+            type="email"
+            value={form.email}
+            onChange={(event) => set("email", event.target.value)}
+            autoComplete="off"
+            required
+          />
+        </Field>
+        <Field label="Login password">
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            required={!form.passwordHash}
+          />
+        </Field>
+        {form.passwordHash ? <p className="lede">Leave the password blank to keep the current one.</p> : null}
         <Field label="Monthly salary (Rs)">
           <input value={form.salary} onChange={(event) => set("salary", event.target.value)} inputMode="numeric" />
         </Field>

@@ -8,6 +8,9 @@ export const DRIVE_FOLDER_URL =
 
 export const ADMISSION_ACCOUNT = "sahilktk093@gmail.com";
 
+/** School office login. Staff emails are stored on each staff record. */
+export const ADMIN_EMAIL = "thewhitehalleducationsystem@gmail.com";
+
 /** Public Google Form that writes each admission into the sheet above. */
 export const ADMISSION_FORM_ACTION =
   "https://docs.google.com/forms/d/e/1FAIpQLSfKe2isBcK9-u2uW-CfolD3b6MKovKautXLNTImpqAwr5g_0Q/formResponse";

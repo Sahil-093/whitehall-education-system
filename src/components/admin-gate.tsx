@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { ADMIN_EMAIL, clearSession, passwordMatches, readSession, writeSession } from "@/lib/admin-auth";
+import { clearSession, credentialsMatch, readSession, writeSession } from "@/lib/admin-auth";
 
 const LogoutContext = createContext<() => void>(() => {});
 
@@ -45,11 +45,10 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     event.preventDefault();
     setBusy(true);
     setError("");
-    const emailOk = email.trim().toLowerCase() === ADMIN_EMAIL;
-    const passwordOk = await passwordMatches(password);
+    const allowed = await credentialsMatch(email, password);
     setBusy(false);
-    if (!emailOk || !passwordOk) {
-      setError("That Gmail or password does not match the school office.");
+    if (!allowed) {
+      setError("That email or password does not match the school office.");
       return;
     }
     writeSession();
@@ -70,11 +69,11 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
           </div>
         </div>
         <div>
-          <p className="page-kicker">Admin</p>
+          <p className="page-kicker">Office</p>
           <h1>Sign in</h1>
         </div>
         <label className="field">
-          <span>Gmail</span>
+          <span>Email</span>
           <input
             type="email"
             name="email"
@@ -100,7 +99,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
         <button className="btn" type="submit" disabled={busy}>
           {busy ? "Checking…" : "Sign in"}
         </button>
-        <p className="login-note">Only the school Gmail can open this office.</p>
+        <p className="login-note">Use the school Gmail, or the email and password saved on a staff record.</p>
       </form>
     </main>
   );
