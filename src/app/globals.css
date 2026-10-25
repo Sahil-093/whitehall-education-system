@@ -132,6 +132,71 @@ a {
   background: rgba(198, 161, 91, 0.12);
 }
 
+button.nav-link {
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--sidebar);
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border: 3px solid var(--gold);
+  padding: 28px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.login-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.login-brand strong {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.login-brand span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 520;
+  font-size: 36px;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.login-error {
+  margin: 0;
+  color: var(--absent);
+  font-size: 14px;
+}
+
+.login-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .side-foot {
   margin-top: auto;
   padding: 16px 12px 0;
@@ -596,6 +661,11 @@ table.data tr:last-child td {
     border-bottom: 2px solid transparent;
     white-space: nowrap;
     padding: 8px 10px;
+  }
+
+  button.nav-link {
+    width: auto;
+    border-left: 0;
   }
 
   .nav-link.active {

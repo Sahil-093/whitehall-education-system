@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DRIVE_FOLDER_URL } from "@/lib/school-links";
+import { useAdminLogout } from "./admin-gate";
 import { useSchool } from "./school-context";
 
 const LINKS = [
@@ -29,6 +30,7 @@ function active(pathname: string, href: string) {
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const school = useSchool();
+  const logout = useAdminLogout();
   const { settings } = school;
 
   return (
@@ -59,6 +61,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <a className="nav-link" href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
             Drive
           </a>
+          <button type="button" className="nav-link" onClick={logout}>
+            Log out
+          </button>
         </nav>
         <p className="side-foot">
           {school.loading ? "Opening the register" : "Admissions and results stay in the sheets"}
