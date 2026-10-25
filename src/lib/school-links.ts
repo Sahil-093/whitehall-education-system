@@ -11,3 +11,9 @@ export const ADMISSION_ACCOUNT = "sahilktk093@gmail.com";
 /** Public Google Form that writes each admission into the sheet above. */
 export const ADMISSION_FORM_ACTION =
   "https://docs.google.com/forms/d/e/1FAIpQLSfKe2isBcK9-u2uW-CfolD3b6MKovKautXLNTImpqAwr5g_0Q/formResponse";
+
+/** October 2026 result responses. The sheet is readable without a sign-in. */
+export const RESULTS_SHEET_ID = "186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE";
+export const RESULTS_SHEET_GID = "153841978";
+export const RESULTS_SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE/edit?gid=153841978#gid=153841978";

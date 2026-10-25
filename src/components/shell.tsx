@@ -37,8 +37,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            W
+          <div className="brand-mark">
+            <img src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`} alt="" />
           </div>
           <div className="brand-copy">
             <strong>{settings.schoolName}</strong>
@@ -63,7 +63,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </a>
         </nav>
         <p className="side-foot">
-          {school.loading ? "Opening the register" : "Saved in this browser"}
+          {school.loading ? "Opening the register" : "Admissions and results stay in the sheets"}
           <span>{settings.academicYear}</span>
         </p>
       </aside>
@@ -72,7 +72,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <p className="notice">
             {normalize(pathname) === "/admission"
               ? "This admission is saved on the Google Sheet. Papers stay in the school Drive folder."
-              : "The register stays in this browser. It is not stored on GitHub."}{" "}
+              : normalize(pathname) === "/results"
+                ? "These marks are read from the October results sheet."
+                : "The register stays in this browser. It is not stored on GitHub."}{" "}
             <Link href="/settings">School files and backup</Link>.
           </p>
         ) : null}

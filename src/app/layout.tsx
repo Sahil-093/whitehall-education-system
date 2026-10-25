@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   title: "Whitehall Education System",
   description: "School register for Whitehall Education System, Karak, Khyber Pakhtunkhwa.",
   robots: { index: false, follow: false },
+  icons: { icon: "/logo-mark.png" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

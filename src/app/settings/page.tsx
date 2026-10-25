@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Field, PageHead } from "@/components/ui";
 import { backupRegister } from "@/lib/browser-register";
-import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL } from "@/lib/school-links";
+import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL, RESULTS_SHEET_URL } from "@/lib/school-links";
 import type { SchoolSettings } from "@/lib/types";
 
 export default function SettingsPage() {
@@ -85,6 +85,12 @@ export default function SettingsPage() {
             School Drive:{" "}
             <a href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
               Whitehall Education System
+            </a>
+          </p>
+          <p>
+            Results sheet:{" "}
+            <a href={RESULTS_SHEET_URL} target="_blank" rel="noreferrer">
+              Result October 2026
             </a>
           </p>
           <div className="form-actions">

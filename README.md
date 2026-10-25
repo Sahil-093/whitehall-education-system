@@ -8,6 +8,7 @@ New admissions are written to the Whitehall admission sheet on sahilktk093@gmail
 
 - Admission sheet: https://docs.google.com/spreadsheets/d/1xEAQ2b9bTNcKBEYVziacZ48cuXlMMcl0SuLMNvnMm5I/edit?gid=966990833#gid=966990833
 - Drive folder: https://drive.google.com/drive/folders/1MqhtgWR04gmvcxbko_sv0Z0aYOJMR8R3?usp=sharing
+- Results sheet: https://docs.google.com/spreadsheets/d/186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE/edit?gid=153841978#gid=153841978
 
 ## Site
 
