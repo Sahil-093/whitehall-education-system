@@ -20,3 +20,9 @@ export const RESULTS_SHEET_ID = "186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE";
 export const RESULTS_SHEET_GID = "153841978";
 export const RESULTS_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE/edit?gid=153841978#gid=153841978";
+
+/** School workbook. Staff records belong on the Staff tab. */
+export const STAFF_SHEET_ID = "10zssHZqevJRYAm56T977XXUbYLRNdLlfR4HCqhHYJtc";
+export const STAFF_SHEET_GID = "1034653518";
+export const STAFF_SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/10zssHZqevJRYAm56T977XXUbYLRNdLlfR4HCqhHYJtc/edit?gid=1034653518#gid=1034653518";

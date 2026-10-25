@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DRIVE_FOLDER_URL } from "@/lib/school-links";
+import { DRIVE_FOLDER_URL, STAFF_SHEET_URL } from "@/lib/school-links";
 import { useAdminLogout } from "./admin-gate";
 import { useSchool } from "./school-context";
 
@@ -73,11 +73,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="main">
         {!school.loading && normalize(pathname) !== "/settings" ? (
           <p className="notice">
-            {normalize(pathname) === "/admission"
-              ? "This admission is saved on the Google Sheet. Papers stay in the school Drive folder."
-              : normalize(pathname) === "/results"
-                ? "These marks are read from the October results sheet."
-                : "The register stays in this browser. It is not stored on GitHub."}{" "}
+            {normalize(pathname) === "/admission" ? (
+              "This admission is saved on the Google Sheet. Papers stay in the school Drive folder. "
+            ) : normalize(pathname) === "/results" ? (
+              "These marks are read from the October results sheet. "
+            ) : normalize(pathname) === "/staff" ? (
+              <>
+                Staff sign in with the email and password saved on their record. Their sheet is the{" "}
+                <a href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
+                  Staff
+                </a>{" "}
+                tab in Whitehall Education System.{" "}
+              </>
+            ) : (
+              "The register stays in this browser. It is not stored on GitHub. "
+            )}
             <Link href="/settings">School files and backup</Link>.
           </p>
         ) : null}

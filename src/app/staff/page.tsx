@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { sha256 } from "@/lib/admin-auth";
+import { STAFF_SHEET_URL } from "@/lib/school-links";
 import { DESIGNATIONS, displayDate, money, todayParts, uid } from "@/lib/format";
 import type { Staff } from "@/lib/types";
 
@@ -38,9 +39,14 @@ export default function StaffPage() {
         title="Staff"
         lede="Teachers and office staff on the Karak campus. Each person signs in with the email and password saved here."
         action={
-          <button type="button" className="btn" onClick={() => setEditor(blank())}>
-            Add staff
-          </button>
+          <>
+            <a className="btn secondary" href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
+              Staff sheet
+            </a>
+            <button type="button" className="btn" onClick={() => setEditor(blank())}>
+              Add staff
+            </button>
+          </>
         }
       />
       {people.length === 0 ? (
