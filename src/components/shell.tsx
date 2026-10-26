@@ -75,8 +75,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <p className="notice">
             {normalize(pathname) === "/admission" ? (
               "This admission is saved on the Google Sheet. Papers stay in the school Drive folder. "
-            ) : normalize(pathname) === "/results" ? (
-              "These marks are read from the October results sheet. "
+            ) : normalize(pathname) === "/results" || normalize(pathname) === "/students" || normalize(pathname) === "/classes" ? (
+              "Students, classes, and the result list are read from the 1st term result sheet. "
             ) : normalize(pathname) === "/staff" ? (
               <>
                 Staff sign in with the email and password saved on their record. Their sheet is the{" "}

@@ -3,76 +3,70 @@
 import Link from "next/link";
 import { useSchool } from "@/components/school-context";
 import { Empty, PageHead, StatStrip } from "@/components/ui";
-import { classLabel, displayDate, todayParts } from "@/lib/format";
+import { useExamSheet } from "@/components/use-exam-sheet";
+import { examStudents } from "@/lib/exam-sheet";
+import { displayDate, todayParts } from "@/lib/format";
 
 export default function OverviewPage() {
   const school = useSchool();
+  const exam = useExamSheet();
   const today = todayParts();
-  const active = school.students.filter((student) => student.status !== "Left");
-
-  const recent = [...school.students]
-    .sort((a, b) => b.admissionDate.localeCompare(a.admissionDate) || b.admissionNo.localeCompare(a.admissionNo))
-    .slice(0, 6);
+  const roll = examStudents(exam.classes);
 
   return (
     <>
       <PageHead
         kicker={`${school.settings.campus} campus`}
         title="Today at Whitehall"
-        lede={`${displayDate(today.iso)} · ${school.settings.academicYear}. Admissions and classes for ${school.settings.address}.`}
+        lede={`${displayDate(today.iso)} · ${school.settings.academicYear}. The 1st term roll for ${school.settings.address}.`}
       />
-      <StatStrip
-        items={[
-          { label: "Active students", value: String(active.length) },
-          { label: "Classes", value: String(school.classes.length) },
-        ]}
-      />
+      {exam.loading ? <p className="opening">Opening the result sheet…</p> : null}
+      {exam.error ? <p className="form-error">{exam.error}</p> : null}
+      {!exam.loading && !exam.error ? (
+        <StatStrip
+          items={[
+            { label: "Students", value: String(roll.length) },
+            { label: "Classes", value: String(exam.classes.length) },
+          ]}
+        />
+      ) : null}
 
-      {school.students.length === 0 ? (
+      {!exam.loading && !exam.error && roll.length === 0 ? (
         <Empty
-          title="The register is empty"
-          text={
-            school.classes.length
-              ? "Nursery to Class 10 are already on the class list. Add the first admission when a child joins."
-              : "Add classes first, then the first admission."
-          }
+          title="No students on the result sheet"
+          text="The class tabs are empty."
           action={
-            <div className="page-actions">
-              <Link className="btn secondary" href="/classes">
-                Add classes
-              </Link>
-              <Link className="btn" href="/admission">
-                New admission
-              </Link>
-            </div>
+            <Link className="btn" href="/results">
+              Open results
+            </Link>
           }
         />
-      ) : (
+      ) : null}
+      {exam.classes.some((room) => room.students.length > 0) ? (
         <section className="panel">
-          <h2>Latest admissions</h2>
+          <h2>1st term classes</h2>
           <div className="table-wrap">
             <table className="data">
               <thead>
                 <tr>
-                  <th>Student</th>
                   <th>Class</th>
+                  <th>Students</th>
                 </tr>
               </thead>
               <tbody>
-                {recent.map((student) => (
-                  <tr key={student.id}>
+                {exam.classes.map((room) => (
+                  <tr key={room.className}>
                     <td>
-                      <strong>{student.name}</strong>
-                      <div className="num">{student.admissionNo}</div>
+                      <strong>{room.className}</strong>
                     </td>
-                    <td>{classLabel(student.className, student.section)}</td>
+                    <td className="num">{room.students.length}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </section>
-      )}
+      ) : null}
     </>
   );
 }

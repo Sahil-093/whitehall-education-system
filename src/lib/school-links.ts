@@ -15,11 +15,11 @@ export const ADMIN_EMAIL = "thewhitehalleducationsystem@gmail.com";
 export const ADMISSION_FORM_ACTION =
   "https://docs.google.com/forms/d/e/1FAIpQLSfKe2isBcK9-u2uW-CfolD3b6MKovKautXLNTImpqAwr5g_0Q/formResponse";
 
-/** October 2026 result responses. The sheet is readable without a sign-in. */
-export const RESULTS_SHEET_ID = "186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE";
-export const RESULTS_SHEET_GID = "153841978";
-export const RESULTS_SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/186arjbjEuHz7dqO5TrVBG1lWOW0pxGbWeZV1c_rqLqE/edit?gid=153841978#gid=153841978";
+/** 1st Term Exam - Result 2026. One tab per class, readable without a sign-in. */
+export const EXAM_SHEET_ID = "1AaPJW2upNFvO9i-qdxZuiMbe_FHwagP6eg8vaKN3QO4";
+export const EXAM_SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/1AaPJW2upNFvO9i-qdxZuiMbe_FHwagP6eg8vaKN3QO4/edit?gid=1288827159#gid=1288827159";
+export const RESULTS_SHEET_URL = EXAM_SHEET_URL;
 
 /** School workbook. Staff records belong on the Staff tab. */
 export const STAFF_SHEET_ID = "10zssHZqevJRYAm56T977XXUbYLRNdLlfR4HCqhHYJtc";

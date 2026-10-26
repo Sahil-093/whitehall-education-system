@@ -4,16 +4,28 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
+import { useExamSheet } from "@/components/use-exam-sheet";
+import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
+import { EXAM_SHEET_URL } from "@/lib/school-links";
 import type { Student } from "@/lib/types";
 
 export default function StudentsPage() {
   const school = useSchool();
+  const exam = useExamSheet();
+  const [sheetQuery, setSheetQuery] = useState("");
+  const [sheetClass, setSheetClass] = useState("");
   const [query, setQuery] = useState("");
   const [classFilter, setClassFilter] = useState("");
   const [status, setStatus] = useState("Active");
   const [editor, setEditor] = useState<Student | null>(null);
   const options = classOptions(school.classes, school.students);
+  const roll = examStudents(exam.classes).filter((student) => {
+    if (sheetClass && student.className !== sheetClass) return false;
+    const needle = sheetQuery.trim().toLowerCase();
+    if (!needle) return true;
+    return `${student.name} ${student.rollNo} ${student.className}`.toLowerCase().includes(needle);
+  });
 
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -43,14 +55,69 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="One line in the register for every child at the Karak campus."
+        lede="Names, roll numbers, and classes come from the 1st term result sheet."
         action={
-          <Link className="btn" href="/admission">
-            New admission
-          </Link>
+          <>
+            <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
+              Open sheet
+            </a>
+            <Link className="btn" href="/admission">
+              New admission
+            </Link>
+          </>
         }
       />
       <div className="filters no-print">
+        <input
+          className="search"
+          value={sheetQuery}
+          onChange={(event) => setSheetQuery(event.target.value)}
+          placeholder="Search name or roll no"
+          aria-label="Search the result roll"
+        />
+        <select className="select" value={sheetClass} onChange={(event) => setSheetClass(event.target.value)} aria-label="Filter the result roll by class">
+          <option value="">All classes</option>
+          {exam.classes.map((room) => (
+            <option key={room.className}>{room.className}</option>
+          ))}
+        </select>
+      </div>
+      {exam.loading ? <p className="opening">Opening the result sheet…</p> : null}
+      {exam.error ? <p className="form-error">{exam.error}</p> : null}
+      {!exam.loading && !exam.error && roll.length === 0 ? (
+        <Empty
+          title={examStudents(exam.classes).length === 0 ? "No students on the sheet" : "Nothing matches"}
+          text={examStudents(exam.classes).length === 0 ? "The class tabs have no names yet." : "Try another class or clear the search."}
+        />
+      ) : null}
+      {roll.length > 0 ? (
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Roll</th>
+                <th>Student</th>
+                <th>Class</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roll.map((student) => (
+                <tr key={`${student.className}-${student.rollNo}-${student.name}`}>
+                  <td className="num">{student.rollNo || "—"}</td>
+                  <td>
+                    <strong>{student.name}</strong>
+                  </td>
+                  <td>{student.className}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+      {school.students.length > 0 ? (
+        <>
+          <h2 style={{ marginTop: 28 }}>Admissions in this browser</h2>
+          <div className="filters no-print">
         <input
           className="search"
           value={query}
@@ -74,21 +141,7 @@ export default function StudentsPage() {
       </div>
 
       {shown.length === 0 ? (
-        <Empty
-          title={school.students.length === 0 ? "No admissions yet" : "Nothing matches"}
-          text={
-            school.students.length === 0
-              ? "Add the first student. Admission numbers start at WH-001."
-              : "Try another class, or clear the search."
-          }
-          action={
-            school.students.length === 0 ? (
-              <Link className="btn" href="/admission">
-                New admission
-              </Link>
-            ) : null
-          }
-        />
+        <Empty title="Nothing matches" text="Try another class, or clear the search." />
       ) : (
         <div className="table-wrap">
           <table className="data">
@@ -134,6 +187,8 @@ export default function StudentsPage() {
           </table>
         </div>
       )}
+        </>
+      ) : null}
 
       {editor ? (
         <StudentDrawer

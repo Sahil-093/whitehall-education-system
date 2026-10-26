@@ -96,7 +96,7 @@ export default function SettingsPage() {
           <p>
             Results sheet:{" "}
             <a href={RESULTS_SHEET_URL} target="_blank" rel="noreferrer">
-              Result October 2026
+              1st Term Exam - Result 2026
             </a>
           </p>
           <p>
