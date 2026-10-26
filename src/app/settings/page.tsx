@@ -11,6 +11,7 @@ import {
   DRIVE_PHOTOS_URL,
   RESULTS_SHEET_URL,
   STAFF_SHEET_URL,
+  STUDENT_SHEET_URL,
 } from "@/lib/school-links";
 import type { SchoolSettings } from "@/lib/types";
 
@@ -98,6 +99,12 @@ export default function SettingsPage() {
               Student photos
             </a>
             .
+          </p>
+          <p>
+            Students sheet:{" "}
+            <a href={STUDENT_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Students
+            </a>
           </p>
           <p>
             Results sheet:{" "}

@@ -11,7 +11,9 @@ import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
 import { formatWhen, recordLog } from "@/lib/office-log";
 import { holdItem } from "@/lib/recycle-bin";
-import { EXAM_SHEET_URL } from "@/lib/school-links";
+import { photoFileName } from "@/lib/photo-store";
+import { STUDENT_SHEET_URL } from "@/lib/school-links";
+import { storeStudentDetails } from "@/lib/student-sheet";
 import {
   emptyStudentStore,
   loadStudentStore,
@@ -123,6 +125,17 @@ export default function StudentsPage() {
     } catch {
       throw new Error("This browser could not store that photo. Remove it or use a smaller picture.");
     }
+    storeStudentDetails({
+      registrationNo: draft.row.registrationNo,
+      studentName: next.name,
+      fatherName: next.fatherName,
+      className: next.className,
+      rollNo: next.rollNo,
+      profile: next.profile,
+      photoName: next.photo ? photoFileName([draft.row.registrationNo, next.name].filter(Boolean).join(" ")) : "",
+      editedBy: record.audit.by,
+      editedAt: record.audit.at,
+    });
     recordLog(
       options?.close === false ? "Saved student photo" : record.audit.kind === "added" ? "Added student" : "Updated student",
       `${next.name} · ${next.rollNo} · ${next.className}`,
@@ -187,11 +200,11 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="View a student, or open the full admission form to fill in the details. Every field can be left blank for now. The roll number saved here is the roll number on the result list."
+        lede="View a student, or open the full admission form to fill in the details. Saving writes those details to the Students sheet. The roll number saved here is the roll number on the result list."
         action={
           <>
-            <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
-              Open sheet
+            <a className="btn secondary" href={STUDENT_SHEET_URL} target="_blank" rel="noreferrer">
+              Students sheet
             </a>
             <Link className="btn secondary" href="/admission">
               New admission
@@ -368,6 +381,17 @@ export default function StudentsPage() {
               });
             }
             writeStore({ ...store, added: store.added.filter((row) => row.id !== draft.row.id) });
+            storeStudentDetails({
+              registrationNo: draft.row.registrationNo,
+              studentName: draft.row.name,
+              fatherName: draft.row.fatherName,
+              className: draft.row.className,
+              rollNo: draft.row.rollNo,
+              photoName: "",
+              editedBy: readActor().name,
+              editedAt: new Date().toISOString(),
+              remove: true,
+            });
             recordLog("Removed student", `${draft.row.name} · ${draft.row.rollNo} · kept in the recycle bin for 14 days`);
             setDraft(null);
           }}

@@ -36,6 +36,13 @@ export const RESULTS_SHEET_URL = EXAM_SHEET_URL;
  */
 export const RESULT_SYNC_URL = "";
 
+/** Student details for the Students section. Inside the school Drive folder. */
+export const STUDENT_SHEET_ID = "1Zea1p4y7lbN7Jsh8Sx-vxmU9N-1Cv5emo9bOPXztls4";
+export const STUDENT_SHEET_URL = `https://docs.google.com/spreadsheets/d/${STUDENT_SHEET_ID}/edit`;
+export const STUDENT_SYNC_URL =
+  "https://script.google.com/macros/s/AKfycbzqMVDhPqznuihg26xF6fbAJIu_qxwZfCkz9gflWAvBjuok_SwmhaVw-t_z8Bbm7XNv/exec";
+export const STUDENT_SHEET_TOKEN = "wh-student-4c8e1b";
+
 /** Staff sheet in sahilktk093@gmail.com Drive, inside the school folder. */
 export const STAFF_SHEET_ID = "1NO6subXMaR29fJORPBvKiW73j94_T_jMZybsd5tg9TY";
 export const STAFF_SHEET_GID = "0";
