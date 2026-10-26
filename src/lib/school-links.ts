@@ -31,8 +31,7 @@ export const RESULTS_SHEET_URL = EXAM_SHEET_URL;
  */
 export const RESULT_SYNC_URL = "";
 
-/** School workbook. Staff records belong on the Staff tab. */
-export const STAFF_SHEET_ID = "10zssHZqevJRYAm56T977XXUbYLRNdLlfR4HCqhHYJtc";
-export const STAFF_SHEET_GID = "1034653518";
-export const STAFF_SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/10zssHZqevJRYAm56T977XXUbYLRNdLlfR4HCqhHYJtc/edit?gid=1034653518#gid=1034653518";
+/** Staff sheet in sahilktk093@gmail.com Drive, inside the school folder. */
+export const STAFF_SHEET_ID = "1NO6subXMaR29fJORPBvKiW73j94_T_jMZybsd5tg9TY";
+export const STAFF_SHEET_GID = "0";
+export const STAFF_SHEET_URL = `https://docs.google.com/spreadsheets/d/${STAFF_SHEET_ID}/edit`;
