@@ -7,6 +7,14 @@ import { sha256 } from "@/lib/admin-auth";
 import { recordLog } from "@/lib/office-log";
 import { holdItem } from "@/lib/recycle-bin";
 import { STAFF_SHEET_URL } from "@/lib/school-links";
+import {
+  ACCESS_AREAS,
+  accessForRole,
+  accessLabels,
+  formatAccess,
+  parseAccess,
+  type AccessId,
+} from "@/lib/staff-access";
 import { DESIGNATIONS, displayDate, money, todayParts, uid } from "@/lib/format";
 import type { Staff } from "@/lib/types";
 
@@ -22,6 +30,7 @@ const blank = (): Staff => ({
   salary: "",
   joiningDate: todayParts().iso,
   status: "Active",
+  access: "",
 });
 
 export default function StaffPage() {
@@ -41,7 +50,7 @@ export default function StaffPage() {
       <PageHead
         kicker="People"
         title="Staff"
-        lede="Teachers and office staff on the Karak campus. Each person signs in with the email and password saved here."
+        lede="Teachers and office staff on the Karak campus. Each person signs in with the email and password saved here. Tick the sections that match their role."
         action={
           <>
             <a className="btn secondary" href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
@@ -77,7 +86,10 @@ export default function StaffPage() {
                     <strong>{person.name}</strong>
                     <div>{person.qualification || "—"}</div>
                   </td>
-                  <td>{person.designation}</td>
+                  <td>
+                    {person.designation}
+                    <div className="access-picks">{checklistLine(person.access)}</div>
+                  </td>
                   <td>{person.subject || "—"}</td>
                   <td>{person.email || "—"}</td>
                   <td>{person.phone || "—"}</td>
@@ -105,10 +117,19 @@ export default function StaffPage() {
   );
 }
 
+function checklistLine(access: string | undefined) {
+  const saved = parseAccess(access);
+  if (!saved) return "Checklist not saved yet";
+  if (!saved.length) return "No sections";
+  return accessLabels(saved).join(", ");
+}
+
 function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void }) {
   const school = useSchool();
   const [form, setForm] = useState(initial);
   const [password, setPassword] = useState("");
+  const [picked, setPicked] = useState<AccessId[]>(() => parseAccess(initial.access) ?? accessForRole(initial.designation));
+  const [custom, setCustom] = useState(() => parseAccess(initial.access) != null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -131,9 +152,14 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
     setError("");
     try {
       const passwordHash = password ? await sha256(password) : form.passwordHash;
-      const saved = { ...form, email, passwordHash, id: form.id || uid() };
+      const access = formatAccess(picked);
+      const saved = { ...form, email, passwordHash, access, id: form.id || uid() };
       await school.upsert("staff", [saved]);
-      recordLog(initial.id ? "Updated staff" : "Added staff", `${saved.name} · ${saved.designation}`);
+      const sections = accessLabels(picked);
+      recordLog(
+        initial.id ? "Updated staff" : "Added staff",
+        `${saved.name} · ${saved.designation} · ${sections.length ? sections.join(", ") : "no sections"}`,
+      );
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Staff was not saved.");
@@ -149,13 +175,54 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
           <input value={form.name} onChange={(event) => set("name", event.target.value)} required />
         </Field>
         <Field label="Role">
-          <input list="roles" value={form.designation} onChange={(event) => set("designation", event.target.value)} required />
+          <input
+            list="roles"
+            value={form.designation}
+            onChange={(event) => {
+              const designation = event.target.value;
+              set("designation", designation);
+              if (!custom) setPicked(accessForRole(designation));
+            }}
+            required
+          />
           <datalist id="roles">
             {DESIGNATIONS.map((role) => (
               <option key={role} value={role} />
             ))}
           </datalist>
         </Field>
+        <fieldset className="access-list">
+          <legend>Checklist for this role</legend>
+          <p className="lede">
+            Tick what {form.name.trim() || "this person"} may open after sign-in. Staff records and Settings stay with the office login.
+            {!parseAccess(initial.access) ? " Until you save, they can still open the current sections." : ""}
+          </p>
+          <button
+            type="button"
+            className="text-btn"
+            onClick={() => {
+              setPicked(accessForRole(form.designation));
+              setCustom(false);
+            }}
+          >
+            Use the {form.designation || "role"} checklist
+          </button>
+          {ACCESS_AREAS.map((area) => (
+            <label key={area.id}>
+              <input
+                type="checkbox"
+                checked={picked.includes(area.id)}
+                onChange={(event) => {
+                  setCustom(true);
+                  setPicked((current) =>
+                    event.target.checked ? [...current, area.id] : current.filter((id) => id !== area.id),
+                  );
+                }}
+              />
+              {area.label}
+            </label>
+          ))}
+        </fieldset>
         <Field label="Subject">
           <input value={form.subject} onChange={(event) => set("subject", event.target.value)} />
         </Field>

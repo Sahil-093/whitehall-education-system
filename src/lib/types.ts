@@ -28,6 +28,8 @@ export type Staff = {
   salary: string;
   joiningDate: string;
   status: string;
+  /** Comma-separated sections this person may open. Blank until the office saves a checklist. */
+  access: string;
 };
 
 export type SchoolClass = {

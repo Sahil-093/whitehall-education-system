@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { readActor } from "@/lib/admin-auth";
 import { purgeBin } from "@/lib/recycle-bin";
 import { DRIVE_FOLDER_URL, STAFF_SHEET_URL } from "@/lib/school-links";
+import { ACCESS_AREAS, areasForStaff, pathAllowed, type AccessId } from "@/lib/staff-access";
+import { Empty } from "./ui";
 import { useAdminLogout } from "./admin-gate";
 import { useSchool } from "./school-context";
 
@@ -24,6 +27,13 @@ function normalize(pathname: string) {
   return pathname || "/";
 }
 
+function linkAllowed(href: string, areas: AccessId[] | "all") {
+  if (areas === "all") return true;
+  if (href === "/staff" || href === "/settings") return false;
+  const area = ACCESS_AREAS.find((item) => item.href === href);
+  return Boolean(area && areas.includes(area.id));
+}
+
 function active(pathname: string, href: string) {
   const current = normalize(pathname);
   if (href === "/") return current === "/";
@@ -34,10 +44,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const school = useSchool();
   const logout = useAdminLogout();
+  const [actorEmail, setActorEmail] = useState<string | null>(null);
   useEffect(() => {
+    setActorEmail(readActor().email);
     purgeBin();
   }, []);
   const { settings } = school;
+  const areas = actorEmail == null ? "all" : areasForStaff(actorEmail, school.staff);
+  const links = LINKS.filter(([href]) => linkAllowed(href, areas));
+  const showDrive = areas === "all" || areas.includes("drive");
+  const path = normalize(pathname);
+  const allowed = pathAllowed(path, areas);
+  const home = areas === "all" ? "/" : (ACCESS_AREAS.find((area) => area.href && areas.includes(area.id))?.href ?? "");
 
   return (
     <div className="shell">
@@ -54,7 +72,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="nav" aria-label="Register">
-          {LINKS.map(([href, label]) => (
+          {links.map(([href, label]) => (
             <Link
               key={href}
               href={href}
@@ -64,9 +82,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {label}
             </Link>
           ))}
-          <a className="nav-link" href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
-            Drive
-          </a>
+          {showDrive ? (
+            <a className="nav-link" href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
+              Drive
+            </a>
+          ) : null}
           <button type="button" className="nav-link" onClick={logout}>
             Log out
           </button>
@@ -77,7 +97,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </p>
       </aside>
       <div className="main">
-        {!school.loading && normalize(pathname) !== "/settings" ? (
+        {!school.loading && allowed && path !== "/settings" ? (
           <p className="notice">
             {normalize(pathname) === "/admission" ? (
               "This admission is saved on the Google Sheet. Papers stay in the school Drive folder. "
@@ -94,11 +114,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ) : (
               "The register stays in this browser. It is not stored on GitHub. "
             )}
-            <Link href="/settings">School files and backup</Link>.
+            {areas === "all" ? (
+              <>
+                <Link href="/settings">School files and backup</Link>.
+              </>
+            ) : (
+              " Your checklist decides which sections you can open."
+            )}
           </p>
         ) : null}
         {!school.loading && school.error ? <p className="notice warn">{school.error}</p> : null}
-        {school.loading ? <p className="opening">Opening the register…</p> : children}
+        {school.loading ? (
+          <p className="opening">Opening the register…</p>
+        ) : allowed ? (
+          children
+        ) : (
+          <Empty
+            title="This section is not on your checklist"
+            text="The office chooses which parts of the register you can open. Ask them to tick this section on your staff record."
+            action={home ? <Link className="btn" href={home}>Open your sections</Link> : undefined}
+          />
+        )}
       </div>
     </div>
   );

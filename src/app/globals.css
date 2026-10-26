@@ -472,6 +472,40 @@ tr.place-3 td {
   resize: vertical;
 }
 
+.access-list {
+  border: 1px solid var(--line);
+  margin: 4px 0 16px;
+  padding: 12px 14px 14px;
+  display: grid;
+  gap: 8px;
+  background: #fbf8f1;
+}
+
+.access-list legend {
+  padding: 0 6px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.access-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.access-list input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--sidebar);
+}
+
+.access-picks {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 8px;
