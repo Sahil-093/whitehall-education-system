@@ -229,7 +229,7 @@ export function ResultEditor({
     <Drawer title={`Edit ${student.name}`} onClose={onClose}>
       <form onSubmit={onSubmit}>
         <p className="edit-note">
-          {student.className}. A saved correction updates this result list and the certificate on this computer. The Google sheet stays as it is.
+          {student.className}. Save updates this list and the certificate. Refresh writes the correction into the result sheet, then loads the sheet again. Father&apos;s name and registration stay on this computer.
         </p>
         <div className="form-grid">
           <Field label="Student name">

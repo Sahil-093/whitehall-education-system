@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadExamBook, type ExamClass } from "@/lib/exam-sheet";
+import { loadExamBook, reloadExamBook, type ExamClass } from "@/lib/exam-sheet";
 
 export function useExamSheet() {
   const [classes, setClasses] = useState<ExamClass[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -25,5 +26,21 @@ export function useExamSheet() {
     };
   }, []);
 
-  return { classes, loading, error };
+  async function refresh() {
+    setRefreshing(true);
+    setError("");
+    try {
+      const next = await reloadExamBook();
+      setClasses(next);
+      return next;
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "The result sheet did not load.";
+      setError(message);
+      throw caught;
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  return { classes, loading, refreshing, error, refresh };
 }

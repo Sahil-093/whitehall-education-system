@@ -43,22 +43,23 @@ type MeritSource = {
 
 export type ExamClass = {
   className: string;
+  tab: string;
   subjects: string[];
   students: ExamStudent[];
 };
 
 /** Tabs of "1st Term Exam - Result 2026", in class order. */
 export const EXAM_TABS = [
-  { gid: "1288827159", className: "Pre-Nursery" },
-  { gid: "716753241", className: "Nursery" },
-  { gid: "994840931", className: "Prep" },
-  { gid: "1935243487", className: "1st" },
-  { gid: "890490549", className: "2nd" },
-  { gid: "1505121680", className: "3rd" },
-  { gid: "187080813", className: "4th" },
-  { gid: "2100849051", className: "5th" },
-  { gid: "1151055848", className: "6th" },
-  { gid: "497972472", className: "7th" },
+  { gid: "1288827159", className: "Pre-Nursery", tab: "P.G" },
+  { gid: "716753241", className: "Nursery", tab: "Nursery" },
+  { gid: "994840931", className: "Prep", tab: "PREP" },
+  { gid: "1935243487", className: "1st", tab: "1st " },
+  { gid: "890490549", className: "2nd", tab: "2nd" },
+  { gid: "1505121680", className: "3rd", tab: "3rd" },
+  { gid: "187080813", className: "4th", tab: "4th" },
+  { gid: "2100849051", className: "5th", tab: "5th" },
+  { gid: "1151055848", className: "6th", tab: "6th" },
+  { gid: "497972472", className: "7th", tab: "7th" },
 ] as const;
 
 type GvizCell = { v?: unknown; f?: string } | null;
@@ -191,7 +192,7 @@ export function applyResultCorrections(classes: ExamClass[], corrections: Record
   });
 }
 
-function loadTab(gid: string, fallbackClass: string) {
+function loadTab(gid: string, fallbackClass: string, tab: string) {
   return new Promise<ExamClass>((resolve, reject) => {
     const callbackName = `whExam_${gid}_${Date.now()}`;
     const script = document.createElement("script");
@@ -250,6 +251,7 @@ function loadTab(gid: string, fallbackClass: string) {
 
       resolve({
         className,
+        tab,
         subjects,
         students,
       });
@@ -269,12 +271,17 @@ let inflight: Promise<ExamClass[]> | null = null;
 
 export function loadExamBook() {
   if (!inflight) {
-    inflight = Promise.all(EXAM_TABS.map((tab) => loadTab(tab.gid, tab.className))).catch((error) => {
+    inflight = Promise.all(EXAM_TABS.map((tab) => loadTab(tab.gid, tab.className, tab.tab))).catch((error) => {
       inflight = null;
       throw error;
     });
   }
   return inflight;
+}
+
+export function reloadExamBook() {
+  inflight = null;
+  return loadExamBook();
 }
 
 export function examStudents(classes: ExamClass[]) {

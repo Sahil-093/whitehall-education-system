@@ -6,6 +6,7 @@ import { Badge, Empty, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
 import { applyResultCorrections, examStudents, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
+import { editsAfterSync, postResultSync } from "@/lib/result-sync";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 
 function shownMark(value: string) {
@@ -35,6 +36,7 @@ export default function ResultsPage() {
   const [edits, setEdits] = useState<Record<string, ResultCorrection>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [cardKey, setCardKey] = useState<string | null>(null);
+  const [syncNote, setSyncNote] = useState("");
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
   const students = useMemo(() => examStudents(classes), [classes]);
   const selected = classes.find((room) => room.className === className) || null;
@@ -60,12 +62,37 @@ export default function ResultsPage() {
     saveResultEdits(next);
   }
 
+  async function onRefresh() {
+    setSyncNote("");
+    const pending = edits;
+    const sent = Object.keys(pending).length > 0 && postResultSync(classes, pending);
+    if (sent) {
+      setSyncNote("Writing corrections into the sheet…");
+      await new Promise((resolve) => window.setTimeout(resolve, 5000));
+    }
+    try {
+      const next = await exam.refresh();
+      if (sent) {
+        const kept = editsAfterSync(pending, next);
+        writeEdits(kept);
+        const failed = Object.keys(pending).filter((key) => kept[key] === pending[key]);
+        setSyncNote(failed.length > 0 ? "Some corrections are still only on this computer." : "The sheet and this list now match.");
+      } else if (Object.keys(pending).length > 0) {
+        setSyncNote("The latest sheet is loaded. Corrections on this computer are not in the sheet yet.");
+      } else {
+        setSyncNote("Loaded the latest sheet.");
+      }
+    } catch {
+      setSyncNote("");
+    }
+  }
+
   return (
     <>
       <PageHead
         kicker="1st term 2026"
         title="Results"
-        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Open a certificate for one student, or correct a mark if the sheet has a mistake. The list runs from 1st downward."
+        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Refresh loads the latest sheet and, once the sheet can be updated from here, writes saved corrections back into it."
         action={
           <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
             Open sheet
@@ -86,10 +113,14 @@ export default function ResultsPage() {
             <option key={room.className}>{room.className}</option>
           ))}
         </select>
+        <button type="button" className="btn secondary" onClick={onRefresh} disabled={exam.refreshing}>
+          {exam.refreshing ? "Refreshing…" : "Refresh"}
+        </button>
         <button type="button" className="btn secondary" onClick={() => window.print()}>
           Print list
         </button>
       </div>
+      {syncNote ? <p className="edit-note">{syncNote}</p> : null}
       {exam.loading ? <p className="opening">Opening the result sheet…</p> : null}
       {exam.error ? <p className="form-error">{exam.error}</p> : null}
       {!exam.loading && !exam.error && shown.length === 0 ? (
