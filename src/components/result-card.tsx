@@ -44,8 +44,12 @@ export function ResultCard({ student, dateOfIssue }: { student: ExamStudent; dat
       <div className="dmc-frame">
         <div className="dmc-inner">
           <header className="dmc-head">
-            <img src={asset("logo.png")} alt="" />
-            <p>The Whitehall Education System</p>
+            <img src={asset("logo-crest.png")} alt="" />
+            <p>
+              The Whitehall
+              <br />
+              Education System
+            </p>
             <span>Karak</span>
             <h2>Detailed Marks Certificate</h2>
             <em>1st Term Examination 2026</em>
@@ -151,18 +155,18 @@ export function ResultCard({ student, dateOfIssue }: { student: ExamStudent; dat
                 ))}
               </ul>
             </div>
-            <div className="dmc-seal">
-              <img src={asset("logo-mark.png")} alt="" />
-              <span>School seal</span>
-            </div>
           </div>
 
           <div className="dmc-signs">
-            <div>
+            <div className="dmc-sign">
               <span />
               <p>Principal&apos;s signature</p>
             </div>
-            <div>
+            <div className="dmc-seal">
+              <img src={asset("logo-crest.png")} alt="" />
+              <span>School seal</span>
+            </div>
+            <div className="dmc-sign">
               <span />
               <p>Examination incharge&apos;s signature</p>
             </div>

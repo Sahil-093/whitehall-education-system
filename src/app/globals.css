@@ -563,46 +563,53 @@ tr.place-3 td {
 
 .dmc-frame {
   min-height: 277mm;
-  padding: 3.5mm;
-  border: 2.5px solid #0c1f6b;
+  padding: 5px;
+  border: 3px solid #0c1f6b;
   box-sizing: border-box;
+  background: #f7f3ea;
 }
 
 .dmc-inner {
-  min-height: calc(277mm - 7mm);
-  border: 1px solid #0c1f6b;
-  padding: 7mm 7mm 5mm;
+  min-height: calc(277mm - 16px);
+  border: 1.5px solid #0c1f6b;
+  padding: 7mm 8mm 6mm;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
 }
 
 .dmc-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
 }
 
 .dmc-head img {
-  width: 68px;
-  height: 74px;
-  object-fit: contain;
+  width: 108px;
+  height: auto;
+  display: block;
+  background: transparent;
 }
 
 .dmc-head p {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-family: var(--font-display), Georgia, serif;
-  font-size: 20px;
+  font-size: 22px;
+  line-height: 1.12;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-weight: 620;
+  font-weight: 650;
 }
 
 .dmc-head span {
   display: block;
-  margin-top: 2px;
+  margin-top: 4px;
   color: #8c6a22;
-  letter-spacing: 0.28em;
-  font-size: 12px;
+  letter-spacing: 0.42em;
+  font-size: 13px;
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .dmc-head h2 {
@@ -722,11 +729,7 @@ tr.place-3 td {
 
 .dmc-lower {
   margin-top: auto;
-  display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: 16px;
-  align-items: end;
-  padding-top: 16px;
+  padding-top: 14px;
 }
 
 .dmc-scale p {
@@ -755,35 +758,39 @@ tr.place-3 td {
 
 .dmc-seal {
   text-align: center;
-  color: #8c6a22;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: #6d7588;
+  font-size: 12px;
 }
 
 .dmc-seal img {
-  width: 72px;
-  height: 72px;
+  width: 84px;
+  height: 84px;
   object-fit: contain;
-  opacity: 0.28;
+  opacity: 0.38;
   display: block;
-  margin: 0 auto 4px;
+  margin: 0 auto 2px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(16, 32, 86, 0.22);
+  padding: 3px;
 }
 
 .dmc-signs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
-  margin-top: 18px;
+  grid-template-columns: 1fr 108px 1fr;
+  gap: 16px;
+  align-items: end;
+  margin-top: 10px;
 }
 
-.dmc-signs span {
+.dmc-sign span {
   display: block;
   border-bottom: 1px solid #102056;
-  height: 28px;
+  height: 34px;
+  margin: 0 6px;
 }
 
-.dmc-signs p {
+.dmc-sign p,
+.dmc-seal span {
   margin: 4px 0 0;
   text-align: center;
   font-size: 12px;
