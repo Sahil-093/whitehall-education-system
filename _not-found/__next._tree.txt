@@ -1,4 +1,4 @@
 :HL["/whitehall-education-system/_next/static/chunks/1ulyhp-nzvut3.css","style"]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"CVyCmO539l7jjPAsBuV7h","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"wh2bJvFUWHxt2QiOaJjSl","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
