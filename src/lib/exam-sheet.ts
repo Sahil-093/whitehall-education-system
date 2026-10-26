@@ -13,6 +13,8 @@ export type ExamStudent = {
   total: string;
   position: string;
   percentage: string;
+  grade: string;
+  rank: number;
 };
 
 export type ExamClass = {
@@ -58,6 +60,73 @@ function classFromLabel(label: string) {
   return match?.[1]?.trim() || "";
 }
 
+function numericMark(value: string) {
+  if (!value || /^absent$/i.test(value)) return null;
+  const parsed = Number(value.replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function paperFull(subject: string, values: string[]) {
+  const scores = values.map(numericMark).filter((score): score is number => score !== null);
+  if (scores.length === 0) return 0;
+  if (/\boral\b/i.test(subject) || /\bO$/i.test(subject)) return 50;
+  if (/nazra/i.test(subject) && Math.max(...scores) <= 50) return 50;
+  return 100;
+}
+
+function formatPercent(value: number) {
+  const rounded = Math.round(value * 100) / 100;
+  return String(rounded);
+}
+
+function ordinal(place: number) {
+  const mod100 = place % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${place}th`;
+  if (place % 10 === 1) return `${place}st`;
+  if (place % 10 === 2) return `${place}nd`;
+  if (place % 10 === 3) return `${place}rd`;
+  return `${place}th`;
+}
+
+function gradeFromPercent(percent: number) {
+  if (percent >= 90) return "A+";
+  if (percent >= 80) return "A";
+  if (percent >= 70) return "B";
+  if (percent >= 60) return "C";
+  if (percent >= 50) return "D";
+  return "F";
+}
+
+function withMerit(students: Omit<ExamStudent, "position" | "percentage" | "grade" | "rank">[], subjects: string[]): ExamStudent[] {
+  const fullBySubject = new Map(subjects.map((subject) => [subject, paperFull(subject, students.map((student) => student.marks.find((mark) => mark.subject === subject)?.value || ""))]));
+  const scored = students.map((student) => {
+    let got = 0;
+    let full = 0;
+    for (const mark of student.marks) {
+      const paper = fullBySubject.get(mark.subject) || 0;
+      if (!paper) continue;
+      full += paper;
+      got += numericMark(mark.value) ?? 0;
+    }
+    const percent = full > 0 ? Math.round((got / full) * 10000) / 100 : 0;
+    return { ...student, total: String(got), percent };
+  });
+  const unique = Array.from(new Set(scored.map((student) => student.percent))).sort((a, b) => b - a);
+  const placeOf = new Map(unique.map((percent, index) => [percent, index + 1]));
+  return scored
+    .map((student) => {
+      const rank = placeOf.get(student.percent) || scored.length;
+      return {
+        ...student,
+        percentage: formatPercent(student.percent),
+        grade: gradeFromPercent(student.percent),
+        rank,
+        position: ordinal(rank),
+      };
+    })
+    .sort((a, b) => a.rank - b.rank || Number(a.rollNo) - Number(b.rollNo) || a.name.localeCompare(b.name));
+}
+
 function loadTab(gid: string, fallbackClass: string) {
   return new Promise<ExamClass>((resolve, reject) => {
     const callbackName = `whExam_${gid}_${Date.now()}`;
@@ -94,7 +163,7 @@ function loadTab(gid: string, fallbackClass: string) {
           return !/^(roll no|total|positions?|percentage)$/i.test(label);
         });
 
-      const students = payload.table.rows
+      const parsed = payload.table.rows
         .map((row) => {
           const at = (index: number) => (index < 0 ? "" : cellText(row.c?.[index]));
           const name = at(nameIndex);
@@ -105,16 +174,15 @@ function loadTab(gid: string, fallbackClass: string) {
             name,
             marks: subjectIndexes.map(({ label, index }) => ({ subject: label, value: at(index) })),
             total: at(totalIndex),
-            position: at(positionIndex),
-            percentage: at(percentageIndex),
           };
         })
-        .filter((student): student is ExamStudent => student !== null)
-        .sort((a, b) => Number(a.rollNo) - Number(b.rollNo) || a.name.localeCompare(b.name));
+        .filter((student): student is NonNullable<typeof student> => student !== null);
+      const subjects = subjectIndexes.map(({ label }) => label);
+      const students = withMerit(parsed, subjects);
 
       resolve({
         className,
-        subjects: subjectIndexes.map(({ label }) => label),
+        subjects,
         students,
       });
     };

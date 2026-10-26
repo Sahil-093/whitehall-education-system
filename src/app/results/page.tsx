@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { Badge, Empty, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
-import { examStudents, type ExamStudent } from "@/lib/exam-sheet";
-import { gradeFor } from "@/lib/format";
+import { examStudents } from "@/lib/exam-sheet";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 
 function shownMark(value: string) {
@@ -13,9 +12,11 @@ function shownMark(value: string) {
   return value;
 }
 
-function grade(student: ExamStudent) {
-  if (!student.percentage || student.percentage.toLowerCase() === "absent") return "";
-  return gradeFor(student.percentage, "100");
+function placeClass(rank: number) {
+  if (rank === 1) return "place-1";
+  if (rank === 2) return "place-2";
+  if (rank === 3) return "place-3";
+  return "";
 }
 
 export default function ResultsPage() {
@@ -26,11 +27,13 @@ export default function ResultsPage() {
   const selected = exam.classes.find((room) => room.className === className) || null;
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return students.filter((student) => {
-      if (className && student.className !== className) return false;
-      if (!needle) return true;
-      return `${student.name} ${student.rollNo} ${student.className}`.toLowerCase().includes(needle);
-    });
+    return students
+      .filter((student) => {
+        if (className && student.className !== className) return false;
+        if (!needle) return true;
+        return `${student.name} ${student.rollNo} ${student.className}`.toLowerCase().includes(needle);
+      })
+      .sort((a, b) => a.rank - b.rank || a.className.localeCompare(b.className) || Number(a.rollNo) - Number(b.rollNo));
   }, [students, className, query]);
 
   return (
@@ -38,7 +41,7 @@ export default function ResultsPage() {
       <PageHead
         kicker="1st term 2026"
         title="Results"
-        lede="The result list is the 1st term sheet. Each class is its own tab. A grade is shown only where the sheet has a percentage: A+ from 90, then A, B, C, D, and F below 50."
+        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. The list runs from 1st downward. Tied percentages share a place. 1st is gold, 2nd silver, 3rd bronze."
         action={
           <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
             Open sheet
@@ -89,29 +92,30 @@ export default function ResultsPage() {
               </tr>
             </thead>
             <tbody>
-              {shown.map((student) => {
-                const mark = grade(student);
-                return (
-                  <tr key={`${student.className}-${student.rollNo}-${student.name}`}>
-                    <td className="num">{student.rollNo || "—"}</td>
-                    <td>
-                      <strong>{student.name}</strong>
-                    </td>
-                    {selected ? null : <td>{student.className}</td>}
-                    {selected
-                      ? selected.subjects.map((subject) => (
-                          <td className="num" key={subject}>
-                            {shownMark(student.marks.find((item) => item.subject === subject)?.value || "")}
-                          </td>
-                        ))
-                      : null}
-                    <td className="num">{shownMark(student.total)}</td>
-                    <td>{student.position || "—"}</td>
-                    <td className="num">{student.percentage || "—"}</td>
-                    <td>{mark ? <Badge value={mark} /> : "—"}</td>
-                  </tr>
-                );
-              })}
+              {shown.map((student) => (
+                <tr key={`${student.className}-${student.rollNo}-${student.name}`} className={placeClass(student.rank)}>
+                  <td className="num">{student.rollNo || "—"}</td>
+                  <td>
+                    <strong>{student.name}</strong>
+                  </td>
+                  {selected ? null : <td>{student.className}</td>}
+                  {selected
+                    ? selected.subjects.map((subject) => (
+                        <td className="num" key={subject}>
+                          {shownMark(student.marks.find((item) => item.subject === subject)?.value || "")}
+                        </td>
+                      ))
+                    : null}
+                  <td className="num">{shownMark(student.total)}</td>
+                  <td>
+                    <span className={`place ${placeClass(student.rank)}`}>{student.position}</span>
+                  </td>
+                  <td className="num">{student.percentage}</td>
+                  <td>
+                    <Badge value={student.grade} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
