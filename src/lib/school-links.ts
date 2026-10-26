@@ -10,6 +10,11 @@ export const DRIVE_FOLDER_URL = `https://drive.google.com/drive/folders/${DRIVE_
 export const DRIVE_PHOTOS_FOLDER_ID = "1jlIb9ZTeJzZ2thvqbxzXH3wZqXN4J-O-";
 export const DRIVE_PHOTOS_URL = `https://drive.google.com/drive/folders/${DRIVE_PHOTOS_FOLDER_ID}?usp=sharing`;
 
+/** Apps Script web app that writes each student JPEG into that folder. */
+export const PHOTO_STORE_URL =
+  "https://script.google.com/macros/s/AKfycbwlbB3Nen8kdjGkY97X47cCNNi1UjHihdP6sZXMiimLiJyikBnJaruuOmQromrjPH_y/exec";
+export const PHOTO_STORE_TOKEN = "wh-photo-7f3c9a";
+
 export const ADMISSION_ACCOUNT = "sahilktk093@gmail.com";
 
 /** School office login. Staff emails are stored on each staff record. */

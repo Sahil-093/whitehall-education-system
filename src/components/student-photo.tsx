@@ -33,17 +33,6 @@ function fileToPhoto(file: File) {
   });
 }
 
-function savePhotoToDrive(photo: string, fileName: string) {
-  const safe = fileName.replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim() || "student-photo";
-  const link = document.createElement("a");
-  link.href = photo;
-  link.download = `${safe}.jpg`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.open(DRIVE_PHOTOS_URL, "_blank", "noopener,noreferrer");
-}
-
 export function StudentPhoto({
   photo,
   fileName,
@@ -139,14 +128,9 @@ export function StudentPhoto({
               Take photo
             </button>
             {photo ? (
-              <>
-                <button type="button" className="btn secondary" onClick={() => savePhotoToDrive(photo, fileName)}>
-                  Save to Drive
-                </button>
-                <button type="button" className="btn secondary" onClick={() => onChange("")}>
-                  Remove photo
-                </button>
-              </>
+              <button type="button" className="btn secondary" onClick={() => onChange("")}>
+                Remove photo
+              </button>
             ) : null}
           </div>
           <input
@@ -187,11 +171,11 @@ export function StudentPhoto({
           ) : null}
           {error ? <p className="form-error">{error}</p> : null}
           <p className="edit-note">
-            Upload a saved picture, or take one with the camera. Save to Drive downloads the picture and opens the{" "}
+            Upload a saved picture, or take one with the camera. It is stored in{" "}
             <a href={DRIVE_PHOTOS_URL} target="_blank" rel="noreferrer">
               Student photos
             </a>{" "}
-            folder. Drop the file there. A copy stays on this computer so this page can show it.
+            as {fileName ? `${fileName}.jpg` : "this student's name"}. A copy stays on this computer so this page can show it.
           </p>
         </div>
       </div>

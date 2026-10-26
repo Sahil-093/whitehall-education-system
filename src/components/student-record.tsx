@@ -5,6 +5,7 @@ import { AdmissionFields } from "@/components/admission-fields";
 import { StudentPhoto } from "@/components/student-photo";
 import { Drawer, Field } from "@/components/ui";
 import { blankAdmission, type AdmissionForm } from "@/lib/admission-form";
+import { photoFileName, storeStudentPhoto } from "@/lib/photo-store";
 import { suggestRoll, type RosterRow } from "@/lib/student-roster";
 
 export type StudentRecordSave = {
@@ -85,9 +86,15 @@ export function StudentRecord({
       setPhotoNote("Add a student name, then press Save student.");
       return;
     }
+    const label = [initial.registrationNo, form.studentName.trim() || initial.name].filter(Boolean).join(" ");
     try {
       onSave(payload(nextPhoto), { close: false });
-      setPhotoNote(nextPhoto ? "Photo saved on this computer." : "Photo removed.");
+      storeStudentPhoto(label, nextPhoto);
+      setPhotoNote(
+        nextPhoto
+          ? `Photo saved in Student photos as ${photoFileName(label)}.`
+          : "Photo removed from Student photos.",
+      );
       setEditing(true);
     } catch (caught) {
       setPhotoNote("");
