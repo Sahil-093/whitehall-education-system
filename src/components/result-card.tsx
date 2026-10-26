@@ -178,6 +178,8 @@ export function ResultCard({ student, dateOfIssue }: { student: ExamStudent; dat
 export function ResultEditor({
   student,
   dateOfIssue,
+  schoolRoll,
+  schoolRegistration,
   edited,
   onClose,
   onSave,
@@ -185,15 +187,16 @@ export function ResultEditor({
 }: {
   student: ExamStudent;
   dateOfIssue: string;
+  schoolRoll: string;
+  schoolRegistration: string;
   edited: boolean;
   onClose: () => void;
   onSave: (correction: ResultCorrection) => void;
   onReset: () => void;
 }) {
   const [name, setName] = useState(student.name);
-  const [rollNo, setRollNo] = useState(student.rollNo);
   const [fatherName, setFatherName] = useState(student.fatherName);
-  const [registrationNo, setRegistrationNo] = useState(student.registrationNo);
+  const [registrationNo, setRegistrationNo] = useState(student.registrationNo || schoolRegistration);
   const [issued, setIssued] = useState(dateOfIssue || new Date().toISOString().slice(0, 10));
   const [marks, setMarks] = useState<Record<string, string>>(() =>
     Object.fromEntries(student.marks.map((mark) => [mark.subject, mark.value])),
@@ -216,11 +219,12 @@ export function ResultEditor({
       }
       nextMarks[mark.subject] = /^absent$/i.test(value) ? "Absent" : value;
     }
+    const typedRegistration = registrationNo.trim();
     onSave({
       name: nextName,
-      rollNo: rollNo.trim(),
+      rollNo: student.rollNo,
       fatherName: fatherName.trim(),
-      registrationNo: registrationNo.trim(),
+      registrationNo: typedRegistration === schoolRegistration ? "" : typedRegistration,
       dateOfIssue: issued,
       marks: nextMarks,
     });
@@ -237,7 +241,7 @@ export function ResultEditor({
             <input value={name} onChange={(event) => setName(event.target.value)} />
           </Field>
           <Field label="Roll number">
-            <input value={rollNo} onChange={(event) => setRollNo(event.target.value)} />
+            <input value={schoolRoll} readOnly />
           </Field>
           <Field label="Father's name">
             <input value={fatherName} onChange={(event) => setFatherName(event.target.value)} />

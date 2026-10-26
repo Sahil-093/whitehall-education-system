@@ -7,6 +7,7 @@ import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
 import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
+import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 import type { Student } from "@/lib/types";
 
@@ -20,12 +21,18 @@ export default function StudentsPage() {
   const [status, setStatus] = useState("Active");
   const [editor, setEditor] = useState<Student | null>(null);
   const options = classOptions(school.classes, school.students);
-  const roll = examStudents(exam.classes).filter((student) => {
-    if (sheetClass && student.className !== sheetClass) return false;
-    const needle = sheetQuery.trim().toLowerCase();
-    if (!needle) return true;
-    return `${student.name} ${student.rollNo} ${student.className}`.toLowerCase().includes(needle);
-  });
+  const numbers = useMemo(() => schoolNumbers(examStudents(exam.classes)), [exam.classes]);
+  const roll = examStudents(exam.classes)
+    .filter((student) => {
+      if (sheetClass && student.className !== sheetClass) return false;
+      const needle = sheetQuery.trim().toLowerCase();
+      if (!needle) return true;
+      const assigned = numbers.get(student.sheetKey);
+      return `${student.name} ${student.rollNo} ${assigned?.rollNo || ""} ${assigned?.registrationNo || ""} ${student.className}`
+        .toLowerCase()
+        .includes(needle);
+    })
+    .sort((a, b) => (numbers.get(a.sheetKey)?.registrationNo || "").localeCompare(numbers.get(b.sheetKey)?.registrationNo || ""));
 
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -55,7 +62,7 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="Names, roll numbers, and classes come from the 1st term result sheet."
+        lede="Roll numbers follow the class: PN01, N01, P01, then 101, 201, 301 and so on. Registration numbers run WHES-001 onward, from Pre-Nursery through 7th."
         action={
           <>
             <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
@@ -72,7 +79,7 @@ export default function StudentsPage() {
           className="search"
           value={sheetQuery}
           onChange={(event) => setSheetQuery(event.target.value)}
-          placeholder="Search name or roll no"
+          placeholder="Search name, roll, or registration"
           aria-label="Search the result roll"
         />
         <select className="select" value={sheetClass} onChange={(event) => setSheetClass(event.target.value)} aria-label="Filter the result roll by class">
@@ -96,14 +103,16 @@ export default function StudentsPage() {
             <thead>
               <tr>
                 <th>Roll</th>
+                <th>Registration</th>
                 <th>Student</th>
                 <th>Class</th>
               </tr>
             </thead>
             <tbody>
               {roll.map((student) => (
-                <tr key={`${student.className}-${student.rollNo}-${student.name}`}>
-                  <td className="num">{student.rollNo || "—"}</td>
+                <tr key={student.sheetKey}>
+                  <td className="num">{numbers.get(student.sheetKey)?.rollNo || "—"}</td>
+                  <td className="num">{numbers.get(student.sheetKey)?.registrationNo || "—"}</td>
                   <td>
                     <strong>{student.name}</strong>
                   </td>

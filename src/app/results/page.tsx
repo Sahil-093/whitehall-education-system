@@ -7,6 +7,7 @@ import { useExamSheet } from "@/components/use-exam-sheet";
 import { applyResultCorrections, examStudents, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
+import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 
 function shownMark(value: string) {
@@ -39,6 +40,7 @@ export default function ResultsPage() {
   const [syncNote, setSyncNote] = useState("");
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
   const students = useMemo(() => examStudents(classes), [classes]);
+  const numbers = useMemo(() => schoolNumbers(students), [students]);
   const selected = classes.find((room) => room.className === className) || null;
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -46,10 +48,13 @@ export default function ResultsPage() {
       .filter((student) => {
         if (className && student.className !== className) return false;
         if (!needle) return true;
-        return `${student.name} ${student.rollNo} ${student.className}`.toLowerCase().includes(needle);
+        const assigned = numbers.get(student.sheetKey);
+        return `${student.name} ${student.rollNo} ${assigned?.rollNo || ""} ${assigned?.registrationNo || ""} ${student.className}`
+          .toLowerCase()
+          .includes(needle);
       })
       .sort((a, b) => a.rank - b.rank || a.className.localeCompare(b.className) || Number(a.rollNo) - Number(b.rollNo));
-  }, [students, className, query]);
+  }, [students, numbers, className, query]);
   const editing = students.find((student) => student.sheetKey === editingKey) || null;
   const card = students.find((student) => student.sheetKey === cardKey) || null;
 
@@ -148,7 +153,7 @@ export default function ResultsPage() {
             <tbody>
               {shown.map((student) => (
                 <tr key={student.sheetKey} className={placeClass(student.rank)}>
-                  <td className="num">{student.rollNo || "—"}</td>
+                  <td className="num">{numbers.get(student.sheetKey)?.rollNo || student.rollNo || "—"}</td>
                   <td>
                     <strong>{student.name}</strong>
                     {edits[student.sheetKey] ? <span className="edited-tag">Edited</span> : null}
@@ -195,13 +200,22 @@ export default function ResultsPage() {
               Close
             </button>
           </div>
-          <ResultCard student={card} dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""} />
+          <ResultCard
+            student={{
+              ...card,
+              rollNo: numbers.get(card.sheetKey)?.rollNo || card.rollNo,
+              registrationNo: card.registrationNo || numbers.get(card.sheetKey)?.registrationNo || "",
+            }}
+            dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""}
+          />
         </div>
       ) : null}
       {editing ? (
         <ResultEditor
           key={editing.sheetKey}
           student={editing}
+          schoolRoll={numbers.get(editing.sheetKey)?.rollNo || editing.rollNo}
+          schoolRegistration={numbers.get(editing.sheetKey)?.registrationNo || ""}
           dateOfIssue={edits[editing.sheetKey]?.dateOfIssue || ""}
           edited={Boolean(edits[editing.sheetKey])}
           onClose={() => setEditingKey(null)}
