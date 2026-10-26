@@ -552,6 +552,10 @@ tr.place-3 td {
   gap: 8px;
 }
 
+.card-stage-print {
+  display: none;
+}
+
 .dmc {
   width: 190mm;
   margin: 0 auto;
@@ -1051,12 +1055,31 @@ tr.place-3 td {
     padding: 0;
   }
 
+  body.printing-card .card-stage-print {
+    display: block;
+  }
+
+  body.printing-card .edit-note,
+  body.printing-card .filters {
+    display: none !important;
+  }
+
   body.printing-card .dmc {
     box-shadow: none;
     width: 100%;
     height: auto;
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  body.printing-card .dmc-batch .dmc {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  body.printing-card .dmc-batch .dmc:last-child {
+    break-after: auto;
+    page-break-after: auto;
   }
 
   body.printing-card .dmc-frame,

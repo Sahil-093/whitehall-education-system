@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ResultCard, ResultEditor } from "@/components/result-card";
 import { Badge, Empty, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
-import { applyResultCorrections, examStudents, type ResultCorrection } from "@/lib/exam-sheet";
+import { applyResultCorrections, examStudents, type ExamStudent, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
 import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
-import { applyStudentForm, emptyStudentStore, loadStudentStore, type StudentStore } from "@/lib/student-roster";
+import { applyStudentForm, emptyStudentStore, loadStudentStore, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
 
 function shownMark(value: string) {
   if (!value) return "—";
@@ -31,6 +31,12 @@ function printCard() {
   window.print();
 }
 
+function byClassThenRank(a: ExamStudent, b: ExamStudent) {
+  const ai = STUDENT_CLASSES.indexOf(a.className);
+  const bi = STUDENT_CLASSES.indexOf(b.className);
+  return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi) || a.rank - b.rank || a.name.localeCompare(b.name);
+}
+
 export default function ResultsPage() {
   const exam = useExamSheet();
   const [className, setClassName] = useState("");
@@ -38,6 +44,7 @@ export default function ResultsPage() {
   const [edits, setEdits] = useState<Record<string, ResultCorrection>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [cardKey, setCardKey] = useState<string | null>(null);
+  const [batch, setBatch] = useState<ExamStudent[] | null>(null);
   const [syncNote, setSyncNote] = useState("");
   const [roster, setRoster] = useState<StudentStore>(emptyStudentStore);
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
@@ -66,6 +73,20 @@ export default function ResultsPage() {
     setEdits(loadResultEdits());
     setRoster(loadStudentStore());
   }, []);
+
+  useEffect(() => {
+    if (!batch) return;
+    const timer = window.setTimeout(() => {
+      document.body.classList.add("printing-card");
+      const cleanup = () => {
+        document.body.classList.remove("printing-card");
+        setBatch(null);
+      };
+      window.addEventListener("afterprint", cleanup, { once: true });
+      window.print();
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [batch]);
 
   function writeEdits(next: Record<string, ResultCorrection>) {
     setEdits(next);
@@ -129,6 +150,14 @@ export default function ResultsPage() {
         <button type="button" className="btn secondary" onClick={() => window.print()}>
           Print list
         </button>
+        <button
+          type="button"
+          className="btn secondary"
+          onClick={() => setBatch([...shown].sort(byClassThenRank))}
+          disabled={shown.length === 0 || batch !== null}
+        >
+          {batch ? "Preparing…" : className ? "Print class DMCs" : "Print all DMCs"}
+        </button>
       </div>
       {syncNote ? <p className="edit-note">{syncNote}</p> : null}
       {exam.loading ? <p className="opening">Opening the result sheet…</p> : null}
@@ -182,7 +211,7 @@ export default function ResultsPage() {
                   <td className="no-print">
                     <div className="row-actions">
                       <button type="button" className="text-btn" onClick={() => setCardKey(student.sheetKey)}>
-                        Card
+                        DMC
                       </button>
                       <button type="button" className="text-btn" onClick={() => setEditingKey(student.sheetKey)}>
                         Edit
@@ -199,13 +228,20 @@ export default function ResultsPage() {
         <div className="card-stage">
           <div className="card-stage-bar no-print">
             <button type="button" className="btn" onClick={printCard}>
-              Print certificate
+              Print DMC
             </button>
             <button type="button" className="btn secondary" onClick={() => setCardKey(null)}>
               Close
             </button>
           </div>
           <ResultCard student={card} dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""} />
+        </div>
+      ) : null}
+      {batch ? (
+        <div className="card-stage card-stage-print dmc-batch">
+          {batch.map((student) => (
+            <ResultCard key={student.sheetKey} student={student} dateOfIssue={edits[student.sheetKey]?.dateOfIssue || ""} />
+          ))}
         </div>
       ) : null}
       {editing ? (
