@@ -492,11 +492,16 @@ tr.place-3 td {
 
 .badge.unpaid,
 .badge.absent,
-.badge.left,
-.badge.f {
+.badge.left {
   color: var(--absent);
   background: #f8ebe8;
   border-color: #f0d0cc;
+}
+
+.badge.f {
+  color: #ffffff;
+  background: #c0392b;
+  border-color: #a93226;
 }
 
 .badge.partial,
@@ -774,7 +779,8 @@ tr.place-3 td {
   tr.place-1 td,
   tr.place-2 td,
   tr.place-3 td,
-  .place {
+  .place,
+  .badge.f {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
