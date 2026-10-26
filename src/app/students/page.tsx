@@ -6,8 +6,11 @@ import { useSchool } from "@/components/school-context";
 import { StudentRecord, type StudentRecordSave } from "@/components/student-record";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
+import { readActor } from "@/lib/admin-auth";
 import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
+import { formatWhen, recordLog } from "@/lib/office-log";
+import { holdItem } from "@/lib/recycle-bin";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 import {
   emptyStudentStore,
@@ -21,6 +24,20 @@ import {
   type StudentStore,
 } from "@/lib/student-roster";
 import type { Student } from "@/lib/types";
+
+function auditLine(student: RosterRow) {
+  if (!student.edited && !student.added) return null;
+  const kind = student.audit?.kind || (student.added && !student.edited ? "added" : "edited");
+  const by = student.audit?.by || "Admin";
+  const when = student.audit?.at ? formatWhen(student.audit.at) : "";
+  const label = kind === "added" ? "Added by" : "Edited by";
+  return (
+    <span className="edit-by">
+      {label}: {by}
+      {when ? ` · ${when}` : ""}
+    </span>
+  );
+}
 
 export default function StudentsPage() {
   const school = useSchool();
@@ -71,7 +88,7 @@ export default function StudentsPage() {
     });
   }
 
-  function saveRecord(next: StudentRecordSave) {
+  function saveRecord(next: StudentRecordSave, options?: { close?: boolean }) {
     if (!draft) return;
     const record = {
       name: next.name,
@@ -80,6 +97,11 @@ export default function StudentsPage() {
       rollNo: next.rollNo,
       profile: next.profile,
       photo: next.photo,
+      audit: {
+        by: readActor().name,
+        at: new Date().toISOString(),
+        kind: !draft.row.id ? ("added" as const) : ("edited" as const),
+      },
     };
     try {
       if (!draft.row.id) {
@@ -101,6 +123,32 @@ export default function StudentsPage() {
     } catch {
       throw new Error("This browser could not store that photo. Remove it or use a smaller picture.");
     }
+    recordLog(
+      options?.close === false ? "Saved student photo" : record.audit.kind === "added" ? "Added student" : "Updated student",
+      `${next.name} · ${next.rollNo} · ${next.className}`,
+    );
+    if (options?.close === false) {
+      setDraft((current) =>
+        current
+          ? {
+              ...current,
+              edit: true,
+              row: {
+                ...current.row,
+                name: next.name,
+                fatherName: next.fatherName,
+                className: next.className,
+                rollNo: next.rollNo,
+                photo: next.photo,
+                profile: next.profile,
+                audit: record.audit,
+                edited: true,
+              },
+            }
+          : current,
+      );
+      return;
+    }
     setDraft(null);
   }
 
@@ -121,9 +169,16 @@ export default function StudentsPage() {
 
   async function removeStudent(student: Student) {
     const confirmed = window.confirm(
-      `Remove ${student.name} from the current register? Past attendance and fee receipts stay as they are.`,
+      `Remove ${student.name}? The record stays in the Recycle Bin for 14 days.`,
     );
     if (!confirmed) return;
+    holdItem({
+      kind: "register-student",
+      name: student.name,
+      detail: `${student.admissionNo} · ${student.className}`,
+      payload: student,
+    });
+    recordLog("Removed student", `${student.name} · kept in the recycle bin for 14 days`);
     await school.remove("students", [student.id]);
   }
 
@@ -190,7 +245,7 @@ export default function StudentsPage() {
                   <td>
                     <strong>{student.name}</strong>
                     {student.fatherName ? <div>{student.fatherName}</div> : null}
-                    {student.edited || student.added ? <span className="edited-tag">{student.added ? "Added" : "Edited"}</span> : null}
+                    {auditLine(student)}
                   </td>
                   <td>{student.className}</td>
                   <td className="no-print">
@@ -286,7 +341,7 @@ export default function StudentsPage() {
 
       {draft ? (
         <StudentRecord
-          key={`${draft.row.id || "new"}-${draft.edit ? "edit" : "view"}`}
+          key={draft.row.id || "new"}
           initial={draft.row}
           rows={rows}
           startInEdit={draft.edit}
@@ -297,11 +352,23 @@ export default function StudentsPage() {
             const patches = { ...store.patches };
             delete patches[draft.row.id];
             writeStore({ ...store, patches });
+            recordLog("Restored sheet", `${draft.row.name} · ${draft.row.rollNo}`);
             setDraft(null);
           }}
           onRemove={() => {
             if (!draft.row.added || !draft.row.id) return;
-            writeStore({ ...store, added: store.added.filter((student) => student.id !== draft.row.id) });
+            const student = store.added.find((row) => row.id === draft.row.id);
+            if (!window.confirm(`Remove ${draft.row.name}? The record stays in the Recycle Bin for 14 days.`)) return;
+            if (student) {
+              holdItem({
+                kind: "roster",
+                name: student.name,
+                detail: `${student.rollNo} · ${student.className} · ${student.registrationNo}`,
+                payload: student,
+              });
+            }
+            writeStore({ ...store, added: store.added.filter((row) => row.id !== draft.row.id) });
+            recordLog("Removed student", `${draft.row.name} · ${draft.row.rollNo} · kept in the recycle bin for 14 days`);
             setDraft(null);
           }}
         />

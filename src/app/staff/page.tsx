@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { sha256 } from "@/lib/admin-auth";
+import { recordLog } from "@/lib/office-log";
+import { holdItem } from "@/lib/recycle-bin";
 import { STAFF_SHEET_URL } from "@/lib/school-links";
 import { DESIGNATIONS, displayDate, money, todayParts, uid } from "@/lib/format";
 import type { Staff } from "@/lib/types";
@@ -28,7 +30,9 @@ export default function StaffPage() {
   const people = [...school.staff].sort((a, b) => a.name.localeCompare(b.name));
 
   async function removePerson(person: Staff) {
-    if (!window.confirm(`Remove ${person.name} from the staff list?`)) return;
+    if (!window.confirm(`Remove ${person.name}? The record stays in the Recycle Bin for 14 days.`)) return;
+    holdItem({ kind: "staff", name: person.name, detail: person.designation, payload: person });
+    recordLog("Removed staff", `${person.name} · kept in the recycle bin for 14 days`);
     await school.remove("staff", [person.id]);
   }
 
@@ -127,7 +131,9 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
     setError("");
     try {
       const passwordHash = password ? await sha256(password) : form.passwordHash;
-      await school.upsert("staff", [{ ...form, email, passwordHash, id: form.id || uid() }]);
+      const saved = { ...form, email, passwordHash, id: form.id || uid() };
+      await school.upsert("staff", [saved]);
+      recordLog(initial.id ? "Updated staff" : "Added staff", `${saved.name} · ${saved.designation}`);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Staff was not saved.");

@@ -4,6 +4,12 @@ import { formatClassRoll, schoolNumbers } from "./school-numbers";
 
 export const STUDENT_CLASSES: string[] = EXAM_TABS.map((tab) => tab.className);
 
+export type StudentAudit = {
+  by: string;
+  at: string;
+  kind: "added" | "edited";
+};
+
 export type StudentFormRecord = {
   name: string;
   fatherName: string;
@@ -11,6 +17,7 @@ export type StudentFormRecord = {
   rollNo: string;
   profile?: AdmissionForm;
   photo: string;
+  audit?: StudentAudit;
 };
 
 export type AddedStudent = StudentFormRecord & {
@@ -34,6 +41,7 @@ export type RosterRow = {
   edited: boolean;
   profile?: AdmissionForm;
   photo: string;
+  audit?: StudentAudit;
 };
 
 const STORAGE_KEY = "whitehall-student-roster-v1";
@@ -54,6 +62,15 @@ function readPhoto(value: unknown) {
   return typeof value === "string" && value.startsWith("data:image/") ? value : "";
 }
 
+function readAudit(value: unknown): StudentAudit | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const row = value as Partial<StudentAudit>;
+  if ((row.kind !== "added" && row.kind !== "edited") || typeof row.by !== "string" || !row.by || typeof row.at !== "string" || !row.at) {
+    return undefined;
+  }
+  return { by: row.by, at: row.at, kind: row.kind };
+}
+
 function readRecord(value: unknown): StudentFormRecord | null {
   if (!value || typeof value !== "object") return null;
   const row = value as Partial<StudentFormRecord>;
@@ -64,6 +81,7 @@ function readRecord(value: unknown): StudentFormRecord | null {
     rollNo: typeof row.rollNo === "string" ? row.rollNo : "",
     profile: cleanProfile(row.profile),
     photo: readPhoto(row.photo),
+    audit: readAudit(row.audit),
   };
 }
 
@@ -116,6 +134,7 @@ export function rosterRows(
       edited: Boolean(patch),
       profile: patch?.profile,
       photo: patch?.photo || "",
+      audit: patch?.audit,
     };
   });
   for (const extra of store.added) {
@@ -127,9 +146,10 @@ export function rosterRows(
       rollNo: extra.rollNo,
       registrationNo: extra.registrationNo,
       added: true,
-      edited: false,
+      edited: extra.audit?.kind === "edited",
       profile: extra.profile,
       photo: extra.photo || "",
+      audit: extra.audit,
     });
   }
   return rows.sort((a, b) => a.registrationNo.localeCompare(b.registrationNo) || a.name.localeCompare(b.name));

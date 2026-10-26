@@ -7,6 +7,7 @@ import { useExamSheet } from "@/components/use-exam-sheet";
 import { applyResultCorrections, examStudents, type ExamStudent, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
+import { recordLog } from "@/lib/office-log";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 import { emptyStudentStore, loadStudentStore, rosterRows, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
 
@@ -267,12 +268,14 @@ export default function ResultsPage() {
           onClose={() => setEditingKey(null)}
           onSave={(correction) => {
             writeEdits({ ...edits, [editing.sheetKey]: correction });
+            recordLog("Updated result", `${editing.name} · roll ${editing.rollNo}`);
             setEditingKey(null);
           }}
           onReset={() => {
             const next = { ...edits };
             delete next[editing.sheetKey];
             writeEdits(next);
+            recordLog("Cleared result correction", `${editing.name} · roll ${editing.rollNo}`);
             setEditingKey(null);
           }}
         />

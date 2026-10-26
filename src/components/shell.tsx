@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { purgeBin } from "@/lib/recycle-bin";
 import { DRIVE_FOLDER_URL, STAFF_SHEET_URL } from "@/lib/school-links";
 import { useAdminLogout } from "./admin-gate";
 import { useSchool } from "./school-context";
@@ -13,6 +15,7 @@ const LINKS = [
   ["/classes", "Classes"],
   ["/staff", "Staff"],
   ["/results", "Results"],
+  ["/log", "Log"],
   ["/settings", "Settings"],
 ];
 
@@ -31,6 +34,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const school = useSchool();
   const logout = useAdminLogout();
+  useEffect(() => {
+    purgeBin();
+  }, []);
   const { settings } = school;
 
   return (

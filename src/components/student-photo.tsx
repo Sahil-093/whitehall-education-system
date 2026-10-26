@@ -35,13 +35,12 @@ function fileToPhoto(file: File) {
 export function StudentPhoto({
   photo,
   onChange,
-  readOnly = false,
 }: {
   photo: string;
   onChange: (photo: string) => void;
-  readOnly?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [live, setLive] = useState(false);
@@ -69,7 +68,7 @@ export function StudentPhoto({
     setError("");
     stop();
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("This browser has no camera. Upload a photo instead.");
+      cameraRef.current?.click();
       return;
     }
     try {
@@ -82,7 +81,7 @@ export function StudentPhoto({
         streamRef.current = stream;
         setLive(true);
       } catch {
-        setError("The camera could not be opened. You can still upload a photo.");
+        cameraRef.current?.click();
       }
     }
   }
@@ -117,49 +116,59 @@ export function StudentPhoto({
         <div className="photo-frame">
           {photo ? <img src={photo} alt="Student" /> : <span>No photo yet</span>}
         </div>
-        {readOnly ? null : (
-          <div className="stack">
-            <div className="photo-actions">
-              <button type="button" className="btn secondary" onClick={() => fileRef.current?.click()}>
-                Upload photo
+        <div className="stack">
+          <div className="photo-actions">
+            <button type="button" className="btn secondary" onClick={() => fileRef.current?.click()}>
+              Upload photo
+            </button>
+            <button type="button" className="btn secondary" onClick={() => void startCamera()}>
+              Take photo
+            </button>
+            {photo ? (
+              <button type="button" className="btn secondary" onClick={() => onChange("")}>
+                Remove photo
               </button>
-              <button type="button" className="btn secondary" onClick={() => void startCamera()}>
-                Take photo
-              </button>
-              {photo ? (
-                <button type="button" className="btn secondary" onClick={() => onChange("")}>
-                  Remove photo
-                </button>
-              ) : null}
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                void onFile(file);
-              }}
-            />
-            {live ? (
-              <>
-                <video ref={videoRef} className="photo-live" autoPlay playsInline muted />
-                <div className="photo-actions">
-                  <button type="button" className="btn" onClick={capture}>
-                    Use this photo
-                  </button>
-                  <button type="button" className="btn secondary" onClick={stop}>
-                    Cancel camera
-                  </button>
-                </div>
-              </>
             ) : null}
-            {error ? <p className="form-error">{error}</p> : null}
-            <p className="edit-note">The photo stays on this computer with the student record.</p>
           </div>
-        )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              void onFile(file);
+            }}
+          />
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              void onFile(file);
+            }}
+          />
+          {live ? (
+            <>
+              <video ref={videoRef} className="photo-live" autoPlay playsInline muted />
+              <div className="photo-actions">
+                <button type="button" className="btn" onClick={capture}>
+                  Use this photo
+                </button>
+                <button type="button" className="btn secondary" onClick={stop}>
+                  Cancel camera
+                </button>
+              </div>
+            </>
+          ) : null}
+          {error ? <p className="form-error">{error}</p> : null}
+          <p className="edit-note">Upload a saved picture, or take one with the camera. The photo stays on this computer.</p>
+        </div>
       </div>
     </section>
   );

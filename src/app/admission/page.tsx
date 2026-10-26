@@ -7,6 +7,7 @@ import { useSchool } from "@/components/school-context";
 import { PageHead } from "@/components/ui";
 import { blankAdmission, registerClassName, submitAdmission, type AdmissionForm } from "@/lib/admission-form";
 import { nextSerial, todayParts, uid } from "@/lib/format";
+import { recordLog } from "@/lib/office-log";
 import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL } from "@/lib/school-links";
 
 export default function AdmissionPage() {
@@ -60,6 +61,7 @@ export default function AdmissionPage() {
           notes,
         },
       ]);
+      recordLog("Saved admission", `${form.studentName.trim()} · ${form.classOfAdmission} · ${admissionNo}`);
       setSavedNo(admissionNo);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The admission was not saved.");

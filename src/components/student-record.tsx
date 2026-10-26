@@ -43,7 +43,7 @@ export function StudentRecord({
   rows: RosterRow[];
   startInEdit: boolean;
   onClose: () => void;
-  onSave: (next: StudentRecordSave) => void;
+  onSave: (next: StudentRecordSave, options?: { close?: boolean }) => void;
   onReset: () => void;
   onRemove: () => void;
 }) {
@@ -53,6 +53,7 @@ export function StudentRecord({
   const [autoRoll, setAutoRoll] = useState(initial.rollNo);
   const [photo, setPhoto] = useState(initial.photo);
   const [error, setError] = useState("");
+  const [photoNote, setPhotoNote] = useState("");
 
   function onChange<K extends keyof AdmissionForm>(key: K, value: AdmissionForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -63,38 +64,71 @@ export function StudentRecord({
     }
   }
 
+  function payload(nextPhoto: string): StudentRecordSave {
+    const name = form.studentName.trim();
+    const className = form.classOfAdmission || initial.className;
+    const nextRoll = rollNo.trim() || suggestRoll(className, rows, initial.id || undefined);
+    return {
+      name: name || initial.name,
+      fatherName: form.fatherName.trim(),
+      className,
+      rollNo: nextRoll,
+      profile: { ...form, studentName: name || initial.name, classOfAdmission: className },
+      photo: nextPhoto,
+    };
+  }
+
+  function applyPhoto(nextPhoto: string) {
+    setPhoto(nextPhoto);
+    setError("");
+    if (!initial.id && !form.studentName.trim()) {
+      setPhotoNote("Add a student name, then press Save student.");
+      return;
+    }
+    try {
+      onSave(payload(nextPhoto), { close: false });
+      setPhotoNote(nextPhoto ? "Photo saved on this computer." : "Photo removed.");
+      setEditing(true);
+    } catch (caught) {
+      setPhotoNote("");
+      setError(caught instanceof Error ? caught.message : "The photo could not be saved.");
+    }
+  }
+
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    const name = form.studentName.trim();
-    if (!initial.id && !name) {
+    if (!initial.id && !form.studentName.trim()) {
       setError("Add a student name so this student appears on the list.");
       return;
     }
-    const className = form.classOfAdmission || initial.className;
-    const nextRoll = rollNo.trim() || suggestRoll(className, rows, initial.id || undefined);
     try {
-      onSave({
-        name: name || initial.name,
-        fatherName: form.fatherName.trim(),
-        className,
-        rollNo: nextRoll,
-        profile: { ...form, studentName: name || initial.name, classOfAdmission: className },
-        photo,
-      });
+      onSave(payload(photo));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The student could not be saved.");
     }
   }
 
   return (
-    <Drawer wide title={editing ? (initial.id ? `Update ${initial.name}` : "Add student") : initial.name} onClose={onClose}>
+    <Drawer
+      wide
+      title={editing ? (initial.id ? `Update ${initial.name}` : "Add student") : initial.name}
+      onClose={onClose}
+      headerAction={
+        editing ? null : (
+          <button type="button" className="text-btn" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+        )
+      }
+    >
       <form onSubmit={submit}>
         <p className="edit-note">
           {editing
             ? "Every detail is optional for now. The roll number saved here is the one on the result list."
             : "These are the details saved for this student. Update opens the full form if something needs correcting."}
         </p>
-        <StudentPhoto photo={photo} onChange={setPhoto} readOnly={!editing} />
+        <StudentPhoto photo={photo} onChange={applyPhoto} />
+        {photoNote ? <p className="edit-note">{photoNote}</p> : null}
         <AdmissionFields form={form} onChange={onChange} readOnly={!editing} allowEmptyClass={false}>
           <Field label="Roll number">
             <input value={rollNo} onChange={(event) => setRollNo(event.target.value)} readOnly={!editing} />
@@ -110,9 +144,14 @@ export function StudentRecord({
               Save student
             </button>
           ) : (
-            <button className="btn" type="button" onClick={() => setEditing(true)}>
-              Update
-            </button>
+            <>
+              <button className="btn" type="button" onClick={() => setEditing(true)}>
+                Update
+              </button>
+              <button className="btn secondary" type="button" onClick={() => setEditing(true)}>
+                Edit
+              </button>
+            </>
           )}
           {editing && initial.edited ? (
             <button className="btn secondary" type="button" onClick={onReset}>

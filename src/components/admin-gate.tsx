@@ -1,7 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { clearSession, credentialsMatch, readSession, writeSession } from "@/lib/admin-auth";
+import { clearSession, credentialsMatch, readActor, readSession, writeSession } from "@/lib/admin-auth";
+import { staffNameForEmail } from "@/lib/browser-register";
+import { recordLog } from "@/lib/office-log";
+import { ADMIN_EMAIL } from "@/lib/school-links";
 
 const LogoutContext = createContext<() => void>(() => {});
 
@@ -19,6 +22,7 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   function logout() {
+    recordLog("Signed out", readActor().name);
     clearSession();
     setAuthed(false);
   }
@@ -51,7 +55,10 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
       setError("That email or password does not match the school office.");
       return;
     }
-    writeSession();
+    const normalized = email.trim().toLowerCase();
+    const name = normalized === ADMIN_EMAIL.toLowerCase() ? "Admin" : staffNameForEmail(normalized) || normalized;
+    writeSession({ name, email: normalized });
+    recordLog("Signed in", name);
     setPassword("");
     onSuccess();
   }

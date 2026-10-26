@@ -5,7 +5,13 @@ export { ADMIN_EMAIL };
 
 const PASSWORD_HASH = "e0bc60c82713f64ef8a57c0c40d02ce24fd0141d5cc3086259c19b1e62a62bea";
 const SESSION_KEY = "whitehall-admin-session";
+const ACTOR_KEY = "whitehall-office-actor";
 const SESSION_MARK = "73c9728866bac2fabac17167db4bd1beed53efdee585922dc2acce363f70cf30";
+
+export type OfficeActor = {
+  name: string;
+  email: string;
+};
 
 export function readSession() {
   try {
@@ -15,13 +21,28 @@ export function readSession() {
   }
 }
 
-export function writeSession() {
+export function writeSession(actor: OfficeActor) {
   localStorage.setItem(SESSION_KEY, SESSION_MARK);
+  localStorage.setItem(ACTOR_KEY, JSON.stringify({ name: actor.name, email: actor.email }));
+}
+
+export function readActor(): OfficeActor {
+  try {
+    const raw = localStorage.getItem(ACTOR_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<OfficeActor>;
+      if (parsed.name) return { name: String(parsed.name), email: String(parsed.email || "") };
+    }
+  } catch {
+    /* keep the office name */
+  }
+  return { name: "Admin", email: ADMIN_EMAIL };
 }
 
 export function clearSession() {
   try {
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(ACTOR_KEY);
   } catch {
     /* private mode */
   }

@@ -227,6 +227,11 @@ function apply(db: Database, body: SaveBody) {
   }
 }
 
+export function staffNameForEmail(email: string) {
+  const person = readDatabase().staff.find((row) => String(row.email || "").toLowerCase() === email.toLowerCase());
+  return person?.name ? String(person.name) : "";
+}
+
 export function activeStaffHash(email: string) {
   const person = readDatabase().staff.find(
     (row) => String(row.email || "").toLowerCase() === email && String(row.status || "Active") !== "Left",
