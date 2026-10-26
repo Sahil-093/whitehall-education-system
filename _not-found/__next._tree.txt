@@ -1,4 +1,4 @@
-:HL["/whitehall-education-system/_next/static/chunks/1j9b9a2ldrszm.css","style"]
+:HL["/whitehall-education-system/_next/static/chunks/0ksm08p80xdl9.css","style"]
 2:[["children",{"s":"__PAGE__","h":160}]]
 1:[["children",{"s":"/_not-found","h":96,"c":"$Q2"}]]
-0:{"b":"ao_zObE2P7FiZpWMGA0VU","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"o4QXtIdv5ZxWFyup-ZDOI","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
