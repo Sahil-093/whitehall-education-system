@@ -127,7 +127,11 @@ export function StudentRecord({
             ? "Every detail is optional for now. The roll number saved here is the one on the result list."
             : "These are the details saved for this student. Update opens the full form if something needs correcting."}
         </p>
-        <StudentPhoto photo={photo} onChange={applyPhoto} />
+        <StudentPhoto
+          photo={photo}
+          fileName={[initial.registrationNo, form.studentName.trim() || initial.name].filter(Boolean).join(" ")}
+          onChange={applyPhoto}
+        />
         {photoNote ? <p className="edit-note">{photoNote}</p> : null}
         <AdmissionFields form={form} onChange={onChange} readOnly={!editing} allowEmptyClass={false}>
           <Field label="Roll number">

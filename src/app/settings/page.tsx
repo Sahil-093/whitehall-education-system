@@ -8,6 +8,7 @@ import {
   ADMISSION_ACCOUNT,
   ADMISSION_SHEET_URL,
   DRIVE_FOLDER_URL,
+  DRIVE_PHOTOS_URL,
   RESULTS_SHEET_URL,
   STAFF_SHEET_URL,
 } from "@/lib/school-links";
@@ -92,6 +93,11 @@ export default function SettingsPage() {
             <a href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
               Whitehall Education System
             </a>
+            . Student photos:{" "}
+            <a href={DRIVE_PHOTOS_URL} target="_blank" rel="noreferrer">
+              Student photos
+            </a>
+            .
           </p>
           <p>
             Results sheet:{" "}

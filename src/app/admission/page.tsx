@@ -8,7 +8,7 @@ import { PageHead } from "@/components/ui";
 import { blankAdmission, registerClassName, submitAdmission, type AdmissionForm } from "@/lib/admission-form";
 import { nextSerial, todayParts, uid } from "@/lib/format";
 import { recordLog } from "@/lib/office-log";
-import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL } from "@/lib/school-links";
+import { ADMISSION_ACCOUNT, ADMISSION_SHEET_URL, DRIVE_FOLDER_URL, DRIVE_PHOTOS_URL } from "@/lib/school-links";
 
 export default function AdmissionPage() {
   const school = useSchool();
@@ -84,9 +84,13 @@ export default function AdmissionPage() {
             <a href={ADMISSION_SHEET_URL} target="_blank" rel="noreferrer">
               admission sheet
             </a>{" "}
-            on {ADMISSION_ACCOUNT}. Form-B, photos, and other papers go in the{" "}
+            on {ADMISSION_ACCOUNT}. Form-B and other papers go in the{" "}
             <a href={DRIVE_FOLDER_URL} target="_blank" rel="noreferrer">
               school Drive folder
+            </a>
+            . Photos go in{" "}
+            <a href={DRIVE_PHOTOS_URL} target="_blank" rel="noreferrer">
+              Student photos
             </a>
             .
           </p>

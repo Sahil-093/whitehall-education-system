@@ -2,9 +2,13 @@
 export const ADMISSION_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1xEAQ2b9bTNcKBEYVziacZ48cuXlMMcl0SuLMNvnMm5I/edit?gid=966990833#gid=966990833";
 
-/** School Drive folder: Whitehall Education System. */
-export const DRIVE_FOLDER_URL =
-  "https://drive.google.com/drive/folders/1MqhtgWR04gmvcxbko_sv0Z0aYOJMR8R3?usp=sharing";
+/** School Drive folder: Whitehall Education System. Owned by sahilktk093@gmail.com. */
+export const DRIVE_FOLDER_ID = "1MqhtgWR04gmvcxbko_sv0Z0aYOJMR8R3";
+export const DRIVE_FOLDER_URL = `https://drive.google.com/drive/folders/${DRIVE_FOLDER_ID}?usp=sharing`;
+
+/** Pictures taken or uploaded on a student record. */
+export const DRIVE_PHOTOS_FOLDER_ID = "1jlIb9ZTeJzZ2thvqbxzXH3wZqXN4J-O-";
+export const DRIVE_PHOTOS_URL = `https://drive.google.com/drive/folders/${DRIVE_PHOTOS_FOLDER_ID}?usp=sharing`;
 
 export const ADMISSION_ACCOUNT = "sahilktk093@gmail.com";
 
