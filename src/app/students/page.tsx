@@ -6,6 +6,7 @@ import { useSchool } from "@/components/school-context";
 import { StudentRecord, type StudentRecordSave } from "@/components/student-record";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
+import { useSharedStudents } from "@/components/use-shared-students";
 import { readActor } from "@/lib/admin-auth";
 import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
@@ -17,7 +18,7 @@ import { storeStudentDetails } from "@/lib/student-sheet";
 import {
   emptyStudentStore,
   loadStudentStore,
-  rosterRows,
+  officeRows,
   saveStudentStore,
   STUDENT_CLASSES,
   suggestRegistration,
@@ -44,6 +45,7 @@ function auditLine(student: RosterRow) {
 export default function StudentsPage() {
   const school = useSchool();
   const exam = useExamSheet();
+  const shared = useSharedStudents();
   const [sheetQuery, setSheetQuery] = useState("");
   const [sheetClass, setSheetClass] = useState("");
   const [query, setQuery] = useState("");
@@ -53,7 +55,10 @@ export default function StudentsPage() {
   const [store, setStore] = useState<StudentStore>(emptyStudentStore);
   const [draft, setDraft] = useState<{ row: RosterRow; edit: boolean } | null>(null);
   const options = classOptions(school.classes, school.students);
-  const rows = useMemo(() => rosterRows(examStudents(exam.classes), store), [exam.classes, store]);
+  const rows = useMemo(
+    () => officeRows(examStudents(exam.classes), store, shared.rows),
+    [exam.classes, store, shared.rows],
+  );
   const roll = rows.filter((student) => {
     if (sheetClass && student.className !== sheetClass) return false;
     const needle = sheetQuery.trim().toLowerCase();
@@ -112,9 +117,12 @@ export default function StudentsPage() {
           added: [...store.added, { ...record, id: uid(), registrationNo: draft.row.registrationNo }],
         });
       } else if (draft.row.added) {
+        const nextAdded = { ...record, id: draft.row.id, registrationNo: draft.row.registrationNo };
         writeStore({
           ...store,
-          added: store.added.map((student) => (student.id === draft.row.id ? { ...student, ...record } : student)),
+          added: store.added.some((student) => student.id === draft.row.id)
+            ? store.added.map((student) => (student.id === draft.row.id ? nextAdded : student))
+            : [...store.added, nextAdded],
         });
       } else {
         writeStore({
@@ -132,7 +140,12 @@ export default function StudentsPage() {
       className: next.className,
       rollNo: next.rollNo,
       profile: next.profile,
-      photoName: next.photo ? photoFileName([draft.row.registrationNo, next.name].filter(Boolean).join(" ")) : "",
+      photoName: next.photo.startsWith("data:image/")
+        ? photoFileName([draft.row.registrationNo, next.name].filter(Boolean).join(" "))
+        : next.photo.startsWith("https://")
+          ? next.photo
+          : "",
+      photoPending: next.photo.startsWith("data:image/"),
       editedBy: record.audit.by,
       editedAt: record.audit.at,
     });
@@ -140,6 +153,7 @@ export default function StudentsPage() {
       options?.close === false ? "Saved student photo" : record.audit.kind === "added" ? "Added student" : "Updated student",
       `${next.name} · ${next.rollNo} · ${next.className}`,
     );
+    window.setTimeout(() => void shared.reload(), 4000);
     if (options?.close === false) {
       setDraft((current) =>
         current
@@ -200,7 +214,7 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="View a student, or open the full admission form to fill in the details. Saving writes those details to the Students sheet. The roll number saved here is the roll number on the result list."
+        lede="View a student, or open the full admission form to fill in the details. A save on any signed-in computer is stored in the Students sheet and shows here for everyone. The roll number saved here is the roll number on the result list."
         action={
           <>
             <a className="btn secondary" href={STUDENT_SHEET_URL} target="_blank" rel="noreferrer">

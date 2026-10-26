@@ -54,8 +54,68 @@ var HEADERS = [
   "Edited at",
 ];
 
-function doGet() {
-  return ContentService.createTextOutput("ok");
+function doGet(e) {
+  var params = (e && e.parameter) || {};
+  if (params.token !== TOKEN || String(params.list || "") !== "1") {
+    return ContentService.createTextOutput("ok");
+  }
+  var sheet = studentsSheet();
+  var values = sheet.getDataRange().getDisplayValues();
+  var students = [];
+  for (var i = 1; i < values.length; i++) {
+    var line = values[i];
+    var reg = String(line[0] || "").trim();
+    if (!reg) continue;
+    students.push({
+      registrationNo: reg,
+      studentName: String(line[1] || ""),
+      fatherName: String(line[2] || ""),
+      className: String(line[3] || ""),
+      rollNo: String(line[4] || ""),
+      profile: {
+        studentName: String(line[1] || ""),
+        fatherName: String(line[2] || ""),
+        gender: String(line[5] || ""),
+        dateOfBirth: String(line[6] || ""),
+        formB: String(line[7] || ""),
+        classOfAdmission: String(line[3] || ""),
+        placeOfBirth: String(line[8] || ""),
+        nationality: String(line[9] || ""),
+        religion: String(line[10] || ""),
+        language: String(line[11] || ""),
+        age: String(line[12] || ""),
+        parentFatherName: String(line[2] || ""),
+        fatherCnic: String(line[13] || ""),
+        occupation: String(line[14] || ""),
+        guardianName: String(line[15] || ""),
+        guardianCnic: String(line[16] || ""),
+        income: String(line[17] || ""),
+        address: String(line[18] || ""),
+        phone: String(line[19] || ""),
+        emergency: String(line[20] || ""),
+        lastSchool: String(line[21] || ""),
+        lastClass: String(line[22] || ""),
+        city: String(line[23] || ""),
+        lastGrade: String(line[24] || ""),
+        reason: String(line[25] || ""),
+        bloodGroup: String(line[26] || ""),
+        allergies: String(line[27] || ""),
+        disability: String(line[28] || ""),
+        admissionFee: String(line[29] || ""),
+        tuitionFee: String(line[30] || ""),
+        remarks: String(line[31] || ""),
+      },
+      photo: String(line[32] || ""),
+      editedBy: String(line[33] || ""),
+      editedAt: String(line[34] || ""),
+    });
+  }
+  var body = JSON.stringify({ students: students });
+  var callback = String(params.callback || "whStudents");
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(callback)) callback = "whStudents";
+  return ContentService
+    .createTextOutput(callback + "(" + body + ")")
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
 function doPost(e) {
@@ -127,12 +187,19 @@ function writeStudent(sheet, data) {
     String(profile.admissionFee || ""),
     String(profile.tuitionFee || ""),
     String(profile.remarks || ""),
-    String(data.photoName || ""),
+    photoValue(sheet, row, data),
     String(data.editedBy || ""),
     String(data.editedAt || ""),
   ];
   if (row > 1) sheet.getRange(row, 1, 1, HEADERS.length).setValues([values]);
   else sheet.appendRow(values);
+}
+
+function photoValue(sheet, row, data) {
+  var incoming = String(data.photoName || "");
+  if (!data.photoPending || row < 2) return incoming;
+  var current = String(sheet.getRange(row, 33).getValue() || "");
+  return current || incoming;
 }
 
 function findRow(sheet, reg) {

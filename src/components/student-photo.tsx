@@ -175,7 +175,7 @@ export function StudentPhoto({
             <a href={DRIVE_PHOTOS_URL} target="_blank" rel="noreferrer">
               Student photos
             </a>{" "}
-            as {fileName ? `${fileName}.jpg` : "this student's name"}. A copy stays on this computer so this page can show it.
+            as {fileName ? `${fileName}.jpg` : "this student's name"}. Every signed-in computer shows that picture. This computer keeps a copy so it can appear straight away.
           </p>
         </div>
       </div>

@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { ResultCard, ResultEditor } from "@/components/result-card";
 import { Badge, Empty, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
+import { useSharedStudents } from "@/components/use-shared-students";
 import { applyResultCorrections, examStudents, type ExamStudent, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
 import { recordLog } from "@/lib/office-log";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
-import { emptyStudentStore, loadStudentStore, rosterRows, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
+import { emptyStudentStore, loadStudentStore, officeRows, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
 
 function shownMark(value: string) {
   if (!value) return "—";
@@ -39,6 +40,7 @@ function byClassThenRank(a: ExamStudent, b: ExamStudent) {
 
 export default function ResultsPage() {
   const exam = useExamSheet();
+  const shared = useSharedStudents();
   const [className, setClassName] = useState("");
   const [query, setQuery] = useState("");
   const [edits, setEdits] = useState<Record<string, ResultCorrection>>({});
@@ -49,7 +51,10 @@ export default function ResultsPage() {
   const [roster, setRoster] = useState<StudentStore>(emptyStudentStore);
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
   const students = useMemo(() => examStudents(classes), [classes]);
-  const rosterList = useMemo(() => rosterRows(examStudents(exam.classes), roster), [exam.classes, roster]);
+  const rosterList = useMemo(
+    () => officeRows(examStudents(exam.classes), roster, shared.rows),
+    [exam.classes, roster, shared.rows],
+  );
   const rosterById = useMemo(() => new Map(rosterList.map((row) => [row.id, row])), [rosterList]);
   const presented = useMemo(
     () =>

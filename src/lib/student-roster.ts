@@ -1,6 +1,7 @@
 import { cleanProfile, type AdmissionForm } from "./admission-form";
 import { EXAM_TABS } from "./exam-sheet";
 import { formatClassRoll, schoolNumbers } from "./school-numbers";
+import type { SharedStudent } from "./student-sheet";
 
 export const STUDENT_CLASSES: string[] = EXAM_TABS.map((tab) => tab.className);
 
@@ -151,6 +152,110 @@ export function rosterRows(
       photo: extra.photo || "",
       audit: extra.audit,
     });
+  }
+  return rows.sort((a, b) => a.registrationNo.localeCompare(b.registrationNo) || a.name.localeCompare(b.name));
+}
+
+function savedAt(value: string | undefined) {
+  const time = Date.parse(value || "");
+  return Number.isFinite(time) ? time : 0;
+}
+
+function usablePhoto(value: string) {
+  if (value.startsWith("data:image/")) return value;
+  if (/^https:\/\/(drive\.google\.com|lh3\.googleusercontent\.com)\//.test(value)) return value;
+  return "";
+}
+
+function profileHasDetail(profile?: AdmissionForm) {
+  if (!profile) return false;
+  return Object.values(profile).some((item) => item.trim());
+}
+
+function applyShared(row: RosterRow, local: StudentFormRecord | undefined, saved?: SharedStudent): RosterRow {
+  const useLocal = Boolean(local) && (!saved || savedAt(local?.audit?.at) > savedAt(saved.editedAt));
+  if (!useLocal && !saved) return row;
+  const name = (useLocal ? local?.name : saved?.studentName)?.trim() || row.name;
+  const fatherName = (useLocal ? local?.fatherName : saved?.fatherName)?.trim() || "";
+  const className = (useLocal ? local?.className : saved?.className) || row.className;
+  const rollNo = (useLocal ? local?.rollNo : saved?.rollNo)?.trim() || row.rollNo;
+  const profile = useLocal ? local?.profile : profileHasDetail(saved?.profile) ? saved?.profile : undefined;
+  const photo = useLocal ? usablePhoto(local?.photo || "") : usablePhoto(saved?.photo || "");
+  const audit = useLocal
+    ? local?.audit
+    : saved?.editedBy || saved?.editedAt
+      ? { by: saved.editedBy || "Admin", at: saved.editedAt, kind: row.added ? ("added" as const) : ("edited" as const) }
+      : undefined;
+  return {
+    ...row,
+    name,
+    fatherName,
+    className,
+    rollNo,
+    profile,
+    photo,
+    audit,
+    edited: Boolean(audit),
+  };
+}
+
+/** Result-sheet names, plus the details saved in the Students sheet for every signed-in computer. */
+export function officeRows(
+  sheet: { sheetKey: string; name: string; className: string; rollNo: string }[],
+  store: StudentStore,
+  shared: SharedStudent[],
+): RosterRow[] {
+  const base = rosterRows(sheet, emptyStudentStore());
+  const byRegistration = new Map(shared.map((row) => [row.registrationNo.trim().toUpperCase(), row]));
+  const used = new Set<string>();
+  const rows = base.map((row) => {
+    const key = row.registrationNo.trim().toUpperCase();
+    const saved = byRegistration.get(key);
+    if (saved) used.add(key);
+    return applyShared(row, store.patches[row.id], saved);
+  });
+  for (const extra of store.added) {
+    const key = extra.registrationNo.trim().toUpperCase();
+    const saved = byRegistration.get(key);
+    if (saved) used.add(key);
+    rows.push(
+      applyShared(
+        {
+          id: extra.id,
+          name: extra.name,
+          fatherName: extra.fatherName,
+          className: extra.className,
+          rollNo: extra.rollNo,
+          registrationNo: extra.registrationNo,
+          added: true,
+          edited: false,
+          photo: "",
+        },
+        extra,
+        saved,
+      ),
+    );
+  }
+  for (const saved of shared) {
+    const key = saved.registrationNo.trim().toUpperCase();
+    if (used.has(key) || !saved.studentName.trim()) continue;
+    rows.push(
+      applyShared(
+        {
+          id: `shared:${saved.registrationNo}`,
+          name: saved.studentName,
+          fatherName: saved.fatherName,
+          className: saved.className,
+          rollNo: saved.rollNo,
+          registrationNo: saved.registrationNo,
+          added: true,
+          edited: false,
+          photo: "",
+        },
+        undefined,
+        saved,
+      ),
+    );
   }
   return rows.sort((a, b) => a.registrationNo.localeCompare(b.registrationNo) || a.name.localeCompare(b.name));
 }
