@@ -14,7 +14,7 @@ function rollValue(rollNo: string) {
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
 
-function classRoll(className: string, place: number) {
+export function formatClassRoll(className: string, place: number) {
   const number = String(place).padStart(2, "0");
   if (className === "Pre-Nursery") return `PN${number}`;
   if (className === "Nursery") return `N${number}`;
@@ -43,7 +43,7 @@ export function schoolNumbers(
     const list = (groups.get(className) || []).slice().sort((a, b) => rollValue(a.rollNo) - rollValue(b.rollNo) || a.name.localeCompare(b.name));
     list.forEach((student, index) => {
       assigned.set(student.sheetKey, {
-        rollNo: classRoll(className, index + 1),
+        rollNo: formatClassRoll(className, index + 1),
         registrationNo: `WHES-${String(serial).padStart(3, "0")}`,
       });
       serial += 1;

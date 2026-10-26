@@ -9,6 +9,7 @@ import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
 import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
+import { applyStudentForm, emptyStudentStore, loadStudentStore, type StudentStore } from "@/lib/student-roster";
 
 function shownMark(value: string) {
   if (!value) return "—";
@@ -38,28 +39,32 @@ export default function ResultsPage() {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [cardKey, setCardKey] = useState<string | null>(null);
   const [syncNote, setSyncNote] = useState("");
+  const [roster, setRoster] = useState<StudentStore>(emptyStudentStore);
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
   const students = useMemo(() => examStudents(classes), [classes]);
   const numbers = useMemo(() => schoolNumbers(students), [students]);
+  const presented = useMemo(
+    () => students.map((student) => applyStudentForm(student, roster, numbers.get(student.sheetKey))),
+    [students, roster, numbers],
+  );
   const selected = classes.find((room) => room.className === className) || null;
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return students
+    return presented
       .filter((student) => {
         if (className && student.className !== className) return false;
         if (!needle) return true;
-        const assigned = numbers.get(student.sheetKey);
-        return `${student.name} ${student.rollNo} ${assigned?.rollNo || ""} ${assigned?.registrationNo || ""} ${student.className}`
-          .toLowerCase()
-          .includes(needle);
+        return `${student.name} ${student.rollNo} ${student.registrationNo} ${student.className}`.toLowerCase().includes(needle);
       })
       .sort((a, b) => a.rank - b.rank || a.className.localeCompare(b.className) || Number(a.rollNo) - Number(b.rollNo));
-  }, [students, numbers, className, query]);
+  }, [presented, className, query]);
   const editing = students.find((student) => student.sheetKey === editingKey) || null;
-  const card = students.find((student) => student.sheetKey === cardKey) || null;
+  const editingView = presented.find((student) => student.sheetKey === editingKey) || null;
+  const card = presented.find((student) => student.sheetKey === cardKey) || null;
 
   useEffect(() => {
     setEdits(loadResultEdits());
+    setRoster(loadStudentStore());
   }, []);
 
   function writeEdits(next: Record<string, ResultCorrection>) {
@@ -153,7 +158,7 @@ export default function ResultsPage() {
             <tbody>
               {shown.map((student) => (
                 <tr key={student.sheetKey} className={placeClass(student.rank)}>
-                  <td className="num">{numbers.get(student.sheetKey)?.rollNo || student.rollNo || "—"}</td>
+                  <td className="num">{student.rollNo || "—"}</td>
                   <td>
                     <strong>{student.name}</strong>
                     {edits[student.sheetKey] ? <span className="edited-tag">Edited</span> : null}
@@ -200,22 +205,15 @@ export default function ResultsPage() {
               Close
             </button>
           </div>
-          <ResultCard
-            student={{
-              ...card,
-              rollNo: numbers.get(card.sheetKey)?.rollNo || card.rollNo,
-              registrationNo: card.registrationNo || numbers.get(card.sheetKey)?.registrationNo || "",
-            }}
-            dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""}
-          />
+          <ResultCard student={card} dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""} />
         </div>
       ) : null}
       {editing ? (
         <ResultEditor
           key={editing.sheetKey}
           student={editing}
-          schoolRoll={numbers.get(editing.sheetKey)?.rollNo || editing.rollNo}
-          schoolRegistration={numbers.get(editing.sheetKey)?.registrationNo || ""}
+          schoolRoll={editingView?.rollNo || editing.rollNo}
+          schoolRegistration={editingView?.registrationNo || ""}
           dateOfIssue={edits[editing.sheetKey]?.dateOfIssue || ""}
           edited={Boolean(edits[editing.sheetKey])}
           onClose={() => setEditingKey(null)}

@@ -1,14 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
 import { examStudents } from "@/lib/exam-sheet";
 import { classLabel, classOptions, compareClass, money, uid } from "@/lib/format";
-import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
+import {
+  emptyStudentStore,
+  loadStudentStore,
+  rosterRows,
+  saveStudentStore,
+  STUDENT_CLASSES,
+  suggestRegistration,
+  suggestRoll,
+  type RosterRow,
+  type StudentStore,
+} from "@/lib/student-roster";
 import type { Student } from "@/lib/types";
 
 export default function StudentsPage() {
@@ -20,19 +30,41 @@ export default function StudentsPage() {
   const [classFilter, setClassFilter] = useState("");
   const [status, setStatus] = useState("Active");
   const [editor, setEditor] = useState<Student | null>(null);
+  const [store, setStore] = useState<StudentStore>(emptyStudentStore);
+  const [draft, setDraft] = useState<RosterRow | null>(null);
   const options = classOptions(school.classes, school.students);
-  const numbers = useMemo(() => schoolNumbers(examStudents(exam.classes)), [exam.classes]);
-  const roll = examStudents(exam.classes)
-    .filter((student) => {
-      if (sheetClass && student.className !== sheetClass) return false;
-      const needle = sheetQuery.trim().toLowerCase();
-      if (!needle) return true;
-      const assigned = numbers.get(student.sheetKey);
-      return `${student.name} ${student.rollNo} ${assigned?.rollNo || ""} ${assigned?.registrationNo || ""} ${student.className}`
-        .toLowerCase()
-        .includes(needle);
-    })
-    .sort((a, b) => (numbers.get(a.sheetKey)?.registrationNo || "").localeCompare(numbers.get(b.sheetKey)?.registrationNo || ""));
+  const rows = useMemo(() => rosterRows(examStudents(exam.classes), store), [exam.classes, store]);
+  const roll = rows.filter((student) => {
+    if (sheetClass && student.className !== sheetClass) return false;
+    const needle = sheetQuery.trim().toLowerCase();
+    if (!needle) return true;
+    return `${student.name} ${student.fatherName} ${student.rollNo} ${student.registrationNo} ${student.className}`
+      .toLowerCase()
+      .includes(needle);
+  });
+
+  useEffect(() => {
+    setStore(loadStudentStore());
+  }, []);
+
+  function writeStore(next: StudentStore) {
+    setStore(next);
+    saveStudentStore(next);
+  }
+
+  function startAdd() {
+    const className = sheetClass || STUDENT_CLASSES[0];
+    setDraft({
+      id: "",
+      name: "",
+      fatherName: "",
+      className,
+      rollNo: suggestRoll(className, rows),
+      registrationNo: suggestRegistration(rows),
+      added: true,
+      edited: false,
+    });
+  }
 
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -62,15 +94,18 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="Roll numbers follow the class: PN01, N01, P01, then 101, 201, 301 and so on. Registration numbers run WHES-001 onward, from Pre-Nursery through 7th."
+        lede="Update a student here, or add one. The roll number saved on this form is the roll number on the result list."
         action={
           <>
             <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
               Open sheet
             </a>
-            <Link className="btn" href="/admission">
+            <Link className="btn secondary" href="/admission">
               New admission
             </Link>
+            <button type="button" className="btn" onClick={startAdd}>
+              Add student
+            </button>
           </>
         }
       />
@@ -93,8 +128,8 @@ export default function StudentsPage() {
       {exam.error ? <p className="form-error">{exam.error}</p> : null}
       {!exam.loading && !exam.error && roll.length === 0 ? (
         <Empty
-          title={examStudents(exam.classes).length === 0 ? "No students on the sheet" : "Nothing matches"}
-          text={examStudents(exam.classes).length === 0 ? "The class tabs have no names yet." : "Try another class or clear the search."}
+          title={rows.length === 0 ? "No students on the sheet" : "Nothing matches"}
+          text={rows.length === 0 ? "The class tabs have no names yet." : "Try another class or clear the search."}
         />
       ) : null}
       {roll.length > 0 ? (
@@ -106,17 +141,25 @@ export default function StudentsPage() {
                 <th>Registration</th>
                 <th>Student</th>
                 <th>Class</th>
+                <th className="no-print"> </th>
               </tr>
             </thead>
             <tbody>
               {roll.map((student) => (
-                <tr key={student.sheetKey}>
-                  <td className="num">{numbers.get(student.sheetKey)?.rollNo || "—"}</td>
-                  <td className="num">{numbers.get(student.sheetKey)?.registrationNo || "—"}</td>
+                <tr key={student.id}>
+                  <td className="num">{student.rollNo || "—"}</td>
+                  <td className="num">{student.registrationNo || "—"}</td>
                   <td>
                     <strong>{student.name}</strong>
+                    {student.fatherName ? <div>{student.fatherName}</div> : null}
+                    {student.edited || student.added ? <span className="edited-tag">{student.added ? "Added" : "Edited"}</span> : null}
                   </td>
                   <td>{student.className}</td>
+                  <td className="no-print">
+                    <button type="button" className="text-btn" onClick={() => setDraft(student)}>
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -199,6 +242,67 @@ export default function StudentsPage() {
         </>
       ) : null}
 
+      {draft ? (
+        <RosterDrawer
+          key={draft.id || "new"}
+          initial={draft}
+          rows={rows}
+          onClose={() => setDraft(null)}
+          onSave={(next) => {
+            if (!draft.id) {
+              writeStore({
+                ...store,
+                added: [
+                  ...store.added,
+                  {
+                    id: uid(),
+                    name: next.name,
+                    fatherName: next.fatherName,
+                    className: next.className,
+                    rollNo: next.rollNo,
+                    registrationNo: draft.registrationNo,
+                  },
+                ],
+              });
+            } else if (draft.added) {
+              writeStore({
+                ...store,
+                added: store.added.map((student) =>
+                  student.id === draft.id
+                    ? { ...student, name: next.name, fatherName: next.fatherName, className: next.className, rollNo: next.rollNo }
+                    : student,
+                ),
+              });
+            } else {
+              writeStore({
+                ...store,
+                patches: {
+                  ...store.patches,
+                  [draft.id]: {
+                    name: next.name,
+                    fatherName: next.fatherName,
+                    className: next.className,
+                    rollNo: next.rollNo,
+                  },
+                },
+              });
+            }
+            setDraft(null);
+          }}
+          onReset={() => {
+            if (!draft.id || draft.added) return;
+            const patches = { ...store.patches };
+            delete patches[draft.id];
+            writeStore({ ...store, patches });
+            setDraft(null);
+          }}
+          onRemove={() => {
+            if (!draft.added || !draft.id) return;
+            writeStore({ ...store, added: store.added.filter((student) => student.id !== draft.id) });
+            setDraft(null);
+          }}
+        />
+      ) : null}
       {editor ? (
         <StudentDrawer
           key={editor.id || "new"}
@@ -207,6 +311,99 @@ export default function StudentsPage() {
         />
       ) : null}
     </>
+  );
+}
+
+function RosterDrawer({
+  initial,
+  rows,
+  onClose,
+  onSave,
+  onReset,
+  onRemove,
+}: {
+  initial: RosterRow;
+  rows: RosterRow[];
+  onClose: () => void;
+  onSave: (next: { name: string; fatherName: string; className: string; rollNo: string }) => void;
+  onReset: () => void;
+  onRemove: () => void;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [fatherName, setFatherName] = useState(initial.fatherName);
+  const [className, setClassName] = useState(initial.className);
+  const [rollNo, setRollNo] = useState(initial.rollNo);
+  const [autoRoll, setAutoRoll] = useState(initial.rollNo);
+  const [error, setError] = useState("");
+
+  function chooseClass(nextClass: string) {
+    const suggestion = suggestRoll(nextClass, rows, initial.id || undefined);
+    setClassName(nextClass);
+    setRollNo((current) => (current === autoRoll || !current.trim() ? suggestion : current));
+    setAutoRoll(suggestion);
+  }
+
+  function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!name.trim()) {
+      setError("Student name is required.");
+      return;
+    }
+    if (!rollNo.trim()) {
+      setError("Roll number is required.");
+      return;
+    }
+    onSave({ name: name.trim(), fatherName: fatherName.trim(), className, rollNo: rollNo.trim() });
+  }
+
+  return (
+    <Drawer title={initial.id ? `Edit ${initial.name}` : "Add student"} onClose={onClose}>
+      <form onSubmit={onSubmit}>
+        <p className="edit-note">
+          The roll number saved here is the one shown on the result list and the certificate. Registration stays {initial.registrationNo || "with the class list"}.
+        </p>
+        <div className="form-grid">
+          <Field label="Student name">
+            <input value={name} onChange={(event) => setName(event.target.value)} required />
+          </Field>
+          <Field label="Father's name">
+            <input value={fatherName} onChange={(event) => setFatherName(event.target.value)} />
+          </Field>
+          <Field label="Class">
+            <select value={className} onChange={(event) => chooseClass(event.target.value)}>
+              {STUDENT_CLASSES.map((room) => (
+                <option key={room}>{room}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Roll number">
+            <input value={rollNo} onChange={(event) => setRollNo(event.target.value)} required />
+          </Field>
+          <Field label="Registration no.">
+            <input value={initial.registrationNo} readOnly />
+          </Field>
+        </div>
+        {error ? <p className="form-error">{error}</p> : null}
+        <div className="form-actions">
+          <button className="btn" type="submit">
+            Save student
+          </button>
+          {initial.edited ? (
+            <button className="btn secondary" type="button" onClick={onReset}>
+              Use sheet again
+            </button>
+          ) : null}
+          {initial.added && initial.id ? (
+            <button className="btn secondary" type="button" onClick={onRemove}>
+              Remove
+            </button>
+          ) : null}
+          <button className="btn secondary" type="button" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Drawer>
   );
 }
 
