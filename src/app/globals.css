@@ -554,7 +554,6 @@ tr.place-3 td {
 
 .dmc {
   width: 190mm;
-  min-height: 277mm;
   margin: 0 auto;
   background: #f7f3ea;
   color: #102056;
@@ -562,7 +561,6 @@ tr.place-3 td {
 }
 
 .dmc-frame {
-  min-height: 277mm;
   padding: 5px;
   border: 3px solid #0c1f6b;
   box-sizing: border-box;
@@ -570,9 +568,8 @@ tr.place-3 td {
 }
 
 .dmc-inner {
-  min-height: calc(277mm - 16px);
   border: 1.5px solid #0c1f6b;
-  padding: 7mm 8mm 6mm;
+  padding: 6mm 8mm 5mm;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -692,10 +689,12 @@ tr.place-3 td {
   font-weight: 650;
 }
 
-.dmc-totals-wrap {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
+.dmc-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px 28px;
+  margin-top: 10px;
 }
 
 .dmc-totals {
@@ -727,11 +726,6 @@ tr.place-3 td {
   font-weight: 750;
 }
 
-.dmc-lower {
-  margin-top: auto;
-  padding-top: 14px;
-}
-
 .dmc-scale p {
   margin: 0 0 6px;
   font-size: 12px;
@@ -747,7 +741,7 @@ tr.place-3 td {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3px 18px;
-  max-width: 280px;
+  max-width: 340px;
   font-size: 12px;
 }
 
@@ -1026,7 +1020,7 @@ tr.place-3 td {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   .sidebar,
@@ -1060,15 +1054,54 @@ tr.place-3 td {
   body.printing-card .dmc {
     box-shadow: none;
     width: 100%;
-    min-height: 270mm;
+    height: auto;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
-  body.printing-card .dmc-frame {
-    min-height: 270mm;
+  body.printing-card .dmc-frame,
+  body.printing-card .dmc-inner,
+  body.printing-card .dmc-summary,
+  body.printing-card .dmc-signs {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   body.printing-card .dmc-inner {
-    min-height: 256mm;
+    padding: 5mm 7mm 4mm;
+  }
+
+  body.printing-card .dmc-head img {
+    width: 84px;
+  }
+
+  body.printing-card .dmc-head h2 {
+    margin-top: 6px;
+    font-size: 22px;
+  }
+
+  body.printing-card .dmc-marks {
+    margin-top: 8px;
+  }
+
+  body.printing-card .dmc-marks th,
+  body.printing-card .dmc-marks td,
+  body.printing-card .dmc-totals th,
+  body.printing-card .dmc-totals td {
+    padding: 3px 6px;
+  }
+
+  body.printing-card .dmc-seal img {
+    width: 64px;
+    height: 64px;
+  }
+
+  body.printing-card .dmc-sign span {
+    height: 18px;
+  }
+
+  body.printing-card .dmc-note {
+    margin-top: 6px;
   }
 
   body.printing-receipt .shell {

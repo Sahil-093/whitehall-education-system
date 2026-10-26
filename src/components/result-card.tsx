@@ -118,7 +118,18 @@ export function ResultCard({ student, dateOfIssue }: { student: ExamStudent; dat
             </tbody>
           </table>
 
-          <div className="dmc-totals-wrap">
+          <div className="dmc-summary">
+            <div className="dmc-scale">
+              <p>Grading scale</p>
+              <ul>
+                {SCALE.map(([grade, band]) => (
+                  <li key={grade}>
+                    <b className={grade === "F" ? "dmc-fail" : ""}>{grade}</b>
+                    <span>{band}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <table className="dmc-totals">
               <tbody>
                 <tr>
@@ -141,20 +152,6 @@ export function ResultCard({ student, dateOfIssue }: { student: ExamStudent; dat
                 </tr>
               </tbody>
             </table>
-          </div>
-
-          <div className="dmc-lower">
-            <div className="dmc-scale">
-              <p>Grading scale</p>
-              <ul>
-                {SCALE.map(([grade, band]) => (
-                  <li key={grade}>
-                    <b className={grade === "F" ? "dmc-fail" : ""}>{grade}</b>
-                    <span>{band}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
 
           <div className="dmc-signs">
