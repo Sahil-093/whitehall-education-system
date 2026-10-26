@@ -49,6 +49,17 @@ export type AdmissionForm = {
   remarks: string;
 };
 
+export function cleanProfile(value: unknown): AdmissionForm | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const source = value as Partial<AdmissionForm>;
+  const next = blankAdmission();
+  (Object.keys(next) as (keyof AdmissionForm)[]).forEach((key) => {
+    const item = source[key];
+    if (typeof item === "string") next[key] = item;
+  });
+  return next;
+}
+
 export const blankAdmission = (): AdmissionForm => ({
   studentName: "",
   fatherName: "",

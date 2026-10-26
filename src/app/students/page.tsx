@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSchool } from "@/components/school-context";
+import { StudentRecord, type StudentRecordSave } from "@/components/student-record";
 import { Badge, Drawer, Empty, Field, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
 import { examStudents } from "@/lib/exam-sheet";
@@ -31,7 +32,7 @@ export default function StudentsPage() {
   const [status, setStatus] = useState("Active");
   const [editor, setEditor] = useState<Student | null>(null);
   const [store, setStore] = useState<StudentStore>(emptyStudentStore);
-  const [draft, setDraft] = useState<RosterRow | null>(null);
+  const [draft, setDraft] = useState<{ row: RosterRow; edit: boolean } | null>(null);
   const options = classOptions(school.classes, school.students);
   const rows = useMemo(() => rosterRows(examStudents(exam.classes), store), [exam.classes, store]);
   const roll = rows.filter((student) => {
@@ -48,22 +49,59 @@ export default function StudentsPage() {
   }, []);
 
   function writeStore(next: StudentStore) {
-    setStore(next);
     saveStudentStore(next);
+    setStore(next);
   }
 
   function startAdd() {
     const className = sheetClass || STUDENT_CLASSES[0];
     setDraft({
-      id: "",
-      name: "",
-      fatherName: "",
-      className,
-      rollNo: suggestRoll(className, rows),
-      registrationNo: suggestRegistration(rows),
-      added: true,
-      edited: false,
+      edit: true,
+      row: {
+        id: "",
+        name: "",
+        fatherName: "",
+        className,
+        rollNo: suggestRoll(className, rows),
+        registrationNo: suggestRegistration(rows),
+        added: true,
+        edited: false,
+        photo: "",
+      },
     });
+  }
+
+  function saveRecord(next: StudentRecordSave) {
+    if (!draft) return;
+    const record = {
+      name: next.name,
+      fatherName: next.fatherName,
+      className: next.className,
+      rollNo: next.rollNo,
+      profile: next.profile,
+      photo: next.photo,
+    };
+    try {
+      if (!draft.row.id) {
+        writeStore({
+          ...store,
+          added: [...store.added, { ...record, id: uid(), registrationNo: draft.row.registrationNo }],
+        });
+      } else if (draft.row.added) {
+        writeStore({
+          ...store,
+          added: store.added.map((student) => (student.id === draft.row.id ? { ...student, ...record } : student)),
+        });
+      } else {
+        writeStore({
+          ...store,
+          patches: { ...store.patches, [draft.row.id]: record },
+        });
+      }
+    } catch {
+      throw new Error("This browser could not store that photo. Remove it or use a smaller picture.");
+    }
+    setDraft(null);
   }
 
   const shown = useMemo(() => {
@@ -94,7 +132,7 @@ export default function StudentsPage() {
       <PageHead
         kicker="Admissions"
         title="Students"
-        lede="Update a student here, or add one. The roll number saved on this form is the roll number on the result list."
+        lede="View a student, or open the full admission form to fill in the details. Every field can be left blank for now. The roll number saved here is the roll number on the result list."
         action={
           <>
             <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
@@ -156,7 +194,11 @@ export default function StudentsPage() {
                   </td>
                   <td>{student.className}</td>
                   <td className="no-print">
-                    <button type="button" className="text-btn" onClick={() => setDraft(student)}>
+                    <button type="button" className="text-btn" onClick={() => setDraft({ row: student, edit: false })}>
+                      View
+                    </button>
+                    {" · "}
+                    <button type="button" className="text-btn" onClick={() => setDraft({ row: student, edit: true })}>
                       Edit
                     </button>
                   </td>
@@ -243,62 +285,23 @@ export default function StudentsPage() {
       ) : null}
 
       {draft ? (
-        <RosterDrawer
-          key={draft.id || "new"}
-          initial={draft}
+        <StudentRecord
+          key={`${draft.row.id || "new"}-${draft.edit ? "edit" : "view"}`}
+          initial={draft.row}
           rows={rows}
+          startInEdit={draft.edit}
           onClose={() => setDraft(null)}
-          onSave={(next) => {
-            if (!draft.id) {
-              writeStore({
-                ...store,
-                added: [
-                  ...store.added,
-                  {
-                    id: uid(),
-                    name: next.name,
-                    fatherName: next.fatherName,
-                    className: next.className,
-                    rollNo: next.rollNo,
-                    registrationNo: draft.registrationNo,
-                  },
-                ],
-              });
-            } else if (draft.added) {
-              writeStore({
-                ...store,
-                added: store.added.map((student) =>
-                  student.id === draft.id
-                    ? { ...student, name: next.name, fatherName: next.fatherName, className: next.className, rollNo: next.rollNo }
-                    : student,
-                ),
-              });
-            } else {
-              writeStore({
-                ...store,
-                patches: {
-                  ...store.patches,
-                  [draft.id]: {
-                    name: next.name,
-                    fatherName: next.fatherName,
-                    className: next.className,
-                    rollNo: next.rollNo,
-                  },
-                },
-              });
-            }
-            setDraft(null);
-          }}
+          onSave={saveRecord}
           onReset={() => {
-            if (!draft.id || draft.added) return;
+            if (!draft.row.id || draft.row.added) return;
             const patches = { ...store.patches };
-            delete patches[draft.id];
+            delete patches[draft.row.id];
             writeStore({ ...store, patches });
             setDraft(null);
           }}
           onRemove={() => {
-            if (!draft.added || !draft.id) return;
-            writeStore({ ...store, added: store.added.filter((student) => student.id !== draft.id) });
+            if (!draft.row.added || !draft.row.id) return;
+            writeStore({ ...store, added: store.added.filter((student) => student.id !== draft.row.id) });
             setDraft(null);
           }}
         />
@@ -311,99 +314,6 @@ export default function StudentsPage() {
         />
       ) : null}
     </>
-  );
-}
-
-function RosterDrawer({
-  initial,
-  rows,
-  onClose,
-  onSave,
-  onReset,
-  onRemove,
-}: {
-  initial: RosterRow;
-  rows: RosterRow[];
-  onClose: () => void;
-  onSave: (next: { name: string; fatherName: string; className: string; rollNo: string }) => void;
-  onReset: () => void;
-  onRemove: () => void;
-}) {
-  const [name, setName] = useState(initial.name);
-  const [fatherName, setFatherName] = useState(initial.fatherName);
-  const [className, setClassName] = useState(initial.className);
-  const [rollNo, setRollNo] = useState(initial.rollNo);
-  const [autoRoll, setAutoRoll] = useState(initial.rollNo);
-  const [error, setError] = useState("");
-
-  function chooseClass(nextClass: string) {
-    const suggestion = suggestRoll(nextClass, rows, initial.id || undefined);
-    setClassName(nextClass);
-    setRollNo((current) => (current === autoRoll || !current.trim() ? suggestion : current));
-    setAutoRoll(suggestion);
-  }
-
-  function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!name.trim()) {
-      setError("Student name is required.");
-      return;
-    }
-    if (!rollNo.trim()) {
-      setError("Roll number is required.");
-      return;
-    }
-    onSave({ name: name.trim(), fatherName: fatherName.trim(), className, rollNo: rollNo.trim() });
-  }
-
-  return (
-    <Drawer title={initial.id ? `Edit ${initial.name}` : "Add student"} onClose={onClose}>
-      <form onSubmit={onSubmit}>
-        <p className="edit-note">
-          The roll number saved here is the one shown on the result list and the certificate. Registration stays {initial.registrationNo || "with the class list"}.
-        </p>
-        <div className="form-grid">
-          <Field label="Student name">
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
-          </Field>
-          <Field label="Father's name">
-            <input value={fatherName} onChange={(event) => setFatherName(event.target.value)} />
-          </Field>
-          <Field label="Class">
-            <select value={className} onChange={(event) => chooseClass(event.target.value)}>
-              {STUDENT_CLASSES.map((room) => (
-                <option key={room}>{room}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Roll number">
-            <input value={rollNo} onChange={(event) => setRollNo(event.target.value)} required />
-          </Field>
-          <Field label="Registration no.">
-            <input value={initial.registrationNo} readOnly />
-          </Field>
-        </div>
-        {error ? <p className="form-error">{error}</p> : null}
-        <div className="form-actions">
-          <button className="btn" type="submit">
-            Save student
-          </button>
-          {initial.edited ? (
-            <button className="btn secondary" type="button" onClick={onReset}>
-              Use sheet again
-            </button>
-          ) : null}
-          {initial.added && initial.id ? (
-            <button className="btn secondary" type="button" onClick={onRemove}>
-              Remove
-            </button>
-          ) : null}
-          <button className="btn secondary" type="button" onClick={onClose}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    </Drawer>
   );
 }
 

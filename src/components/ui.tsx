@@ -55,14 +55,16 @@ export function Drawer({
   title,
   onClose,
   children,
+  wide = false,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   return (
     <div className="drawer-backdrop">
-      <aside className="drawer" role="dialog" aria-modal="true" aria-label={title}>
+      <aside className={wide ? "drawer wide" : "drawer"} role="dialog" aria-modal="true" aria-label={title}>
         <div className="drawer-top">
           <h2>{title}</h2>
           <button type="button" className="text-btn" onClick={onClose}>

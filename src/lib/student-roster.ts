@@ -1,3 +1,4 @@
+import { cleanProfile, type AdmissionForm } from "./admission-form";
 import { EXAM_TABS } from "./exam-sheet";
 import { formatClassRoll, schoolNumbers } from "./school-numbers";
 
@@ -8,6 +9,8 @@ export type StudentFormRecord = {
   fatherName: string;
   className: string;
   rollNo: string;
+  profile?: AdmissionForm;
+  photo: string;
 };
 
 export type AddedStudent = StudentFormRecord & {
@@ -29,6 +32,8 @@ export type RosterRow = {
   registrationNo: string;
   added: boolean;
   edited: boolean;
+  profile?: AdmissionForm;
+  photo: string;
 };
 
 const STORAGE_KEY = "whitehall-student-roster-v1";
@@ -45,13 +50,43 @@ function isAdded(value: unknown): value is AddedStudent {
   return Boolean(row.id && row.name && row.className && row.rollNo && row.registrationNo);
 }
 
+function readPhoto(value: unknown) {
+  return typeof value === "string" && value.startsWith("data:image/") ? value : "";
+}
+
+function readRecord(value: unknown): StudentFormRecord | null {
+  if (!value || typeof value !== "object") return null;
+  const row = value as Partial<StudentFormRecord>;
+  return {
+    name: typeof row.name === "string" ? row.name : "",
+    fatherName: typeof row.fatherName === "string" ? row.fatherName : "",
+    className: typeof row.className === "string" ? row.className : "",
+    rollNo: typeof row.rollNo === "string" ? row.rollNo : "",
+    profile: cleanProfile(row.profile),
+    photo: readPhoto(row.photo),
+  };
+}
+
 export function loadStudentStore(): StudentStore {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptyStudentStore();
     const parsed = JSON.parse(raw) as Partial<StudentStore>;
-    const patches = parsed.patches && typeof parsed.patches === "object" ? parsed.patches : {};
-    const added = Array.isArray(parsed.added) ? parsed.added.filter(isAdded) : [];
+    const patches: StudentStore["patches"] = {};
+    if (parsed.patches && typeof parsed.patches === "object") {
+      for (const [key, value] of Object.entries(parsed.patches)) {
+        const record = readRecord(value);
+        if (record) patches[key] = record;
+      }
+    }
+    const added = Array.isArray(parsed.added)
+      ? parsed.added.flatMap((value) => {
+          if (!isAdded(value)) return [];
+          const record = readRecord(value);
+          if (!record) return [];
+          return [{ ...record, id: value.id, registrationNo: value.registrationNo, name: value.name, className: value.className, rollNo: value.rollNo }];
+        })
+      : [];
     return { patches, added };
   } catch {
     return emptyStudentStore();
@@ -79,6 +114,8 @@ export function rosterRows(
       registrationNo: assigned?.registrationNo || "",
       added: false,
       edited: Boolean(patch),
+      profile: patch?.profile,
+      photo: patch?.photo || "",
     };
   });
   for (const extra of store.added) {
@@ -91,6 +128,8 @@ export function rosterRows(
       registrationNo: extra.registrationNo,
       added: true,
       edited: false,
+      profile: extra.profile,
+      photo: extra.photo || "",
     });
   }
   return rows.sort((a, b) => a.registrationNo.localeCompare(b.registrationNo) || a.name.localeCompare(b.name));
