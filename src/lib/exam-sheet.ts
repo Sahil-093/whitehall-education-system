@@ -3,18 +3,42 @@ import { EXAM_SHEET_ID } from "./school-links";
 export type ExamMark = {
   subject: string;
   value: string;
+  max: number;
 };
 
 export type ExamStudent = {
   className: string;
   rollNo: string;
   name: string;
+  sheetKey: string;
+  fatherName: string;
+  registrationNo: string;
   marks: ExamMark[];
   total: string;
   position: string;
   percentage: string;
   grade: string;
   rank: number;
+};
+
+export type ResultCorrection = {
+  name: string;
+  rollNo: string;
+  fatherName: string;
+  registrationNo: string;
+  dateOfIssue: string;
+  marks: Record<string, string>;
+};
+
+type MeritSource = {
+  className: string;
+  rollNo: string;
+  name: string;
+  sheetKey: string;
+  fatherName: string;
+  registrationNo: string;
+  marks: { subject: string; value: string }[];
+  total: string;
 };
 
 export type ExamClass = {
@@ -88,7 +112,7 @@ function ordinal(place: number) {
   return `${place}th`;
 }
 
-function gradeFromPercent(percent: number) {
+export function gradeFromPercent(percent: number) {
   if (percent >= 90) return "A+";
   if (percent >= 80) return "A";
   if (percent >= 70) return "B";
@@ -97,19 +121,21 @@ function gradeFromPercent(percent: number) {
   return "F";
 }
 
-function withMerit(students: Omit<ExamStudent, "position" | "percentage" | "grade" | "rank">[], subjects: string[]): ExamStudent[] {
+function withMerit(students: MeritSource[], subjects: string[]): ExamStudent[] {
   const fullBySubject = new Map(subjects.map((subject) => [subject, paperFull(subject, students.map((student) => student.marks.find((mark) => mark.subject === subject)?.value || ""))]));
   const scored = students.map((student) => {
     let got = 0;
     let full = 0;
-    for (const mark of student.marks) {
+    const marks = student.marks.map((mark) => {
       const paper = fullBySubject.get(mark.subject) || 0;
-      if (!paper) continue;
-      full += paper;
-      got += numericMark(mark.value) ?? 0;
-    }
+      if (paper) {
+        full += paper;
+        got += numericMark(mark.value) ?? 0;
+      }
+      return { ...mark, max: paper };
+    });
     const percent = full > 0 ? Math.round((got / full) * 10000) / 100 : 0;
-    return { ...student, total: String(got), percent };
+    return { ...student, marks, total: String(got), percent };
   });
   const unique = Array.from(new Set(scored.map((student) => student.percent))).sort((a, b) => b - a);
   const placeOf = new Map(unique.map((percent, index) => [percent, index + 1]));
@@ -125,6 +151,44 @@ function withMerit(students: Omit<ExamStudent, "position" | "percentage" | "grad
       };
     })
     .sort((a, b) => a.rank - b.rank || Number(a.rollNo) - Number(b.rollNo) || a.name.localeCompare(b.name));
+}
+
+export function subjectResult(mark: ExamMark) {
+  if (!mark.max) return null;
+  const raw = mark.value.trim();
+  if (!raw) return { obtained: "—", percentage: "—", grade: "" };
+  if (/^absent$/i.test(raw)) return { obtained: "Absent", percentage: "—", grade: "" };
+  const score = numericMark(raw);
+  if (score == null) return { obtained: raw, percentage: "—", grade: "" };
+  const percent = Math.round((score / mark.max) * 10000) / 100;
+  return { obtained: String(score), percentage: `${formatPercent(percent)}%`, grade: gradeFromPercent(percent) };
+}
+
+export function paperTotal(student: ExamStudent) {
+  return student.marks.reduce((sum, mark) => sum + mark.max, 0);
+}
+
+export function applyResultCorrections(classes: ExamClass[], corrections: Record<string, ResultCorrection>) {
+  return classes.map((room) => {
+    const source = room.students.map((student) => {
+      const edit = corrections[student.sheetKey];
+      const marks = student.marks.map((mark) => ({
+        subject: mark.subject,
+        value: edit && Object.prototype.hasOwnProperty.call(edit.marks, mark.subject) ? edit.marks[mark.subject] : mark.value,
+      }));
+      return {
+        className: student.className,
+        rollNo: edit?.rollNo.trim() || student.rollNo,
+        name: edit?.name.trim() || student.name,
+        sheetKey: student.sheetKey,
+        fatherName: edit?.fatherName.trim() || "",
+        registrationNo: edit?.registrationNo.trim() || "",
+        marks,
+        total: student.total,
+      };
+    });
+    return { ...room, students: withMerit(source, room.subjects) };
+  });
 }
 
 function loadTab(gid: string, fallbackClass: string) {
@@ -168,10 +232,14 @@ function loadTab(gid: string, fallbackClass: string) {
           const at = (index: number) => (index < 0 ? "" : cellText(row.c?.[index]));
           const name = at(nameIndex);
           if (!name || /^student name$/i.test(name)) return null;
+          const rollNo = at(rollIndex);
           return {
             className,
-            rollNo: at(rollIndex),
+            rollNo,
             name,
+            sheetKey: [className, rollNo, name].join("\u001f"),
+            fatherName: "",
+            registrationNo: "",
             marks: subjectIndexes.map(({ label, index }) => ({ subject: label, value: at(index) })),
             total: at(totalIndex),
           };

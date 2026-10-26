@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ResultCard, ResultEditor } from "@/components/result-card";
 import { Badge, Empty, PageHead } from "@/components/ui";
 import { useExamSheet } from "@/components/use-exam-sheet";
-import { examStudents } from "@/lib/exam-sheet";
+import { applyResultCorrections, examStudents, type ResultCorrection } from "@/lib/exam-sheet";
+import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
 
 function shownMark(value: string) {
@@ -19,12 +21,23 @@ function placeClass(rank: number) {
   return "";
 }
 
+function printCard() {
+  document.body.classList.add("printing-card");
+  const cleanup = () => document.body.classList.remove("printing-card");
+  window.addEventListener("afterprint", cleanup, { once: true });
+  window.print();
+}
+
 export default function ResultsPage() {
   const exam = useExamSheet();
   const [className, setClassName] = useState("");
   const [query, setQuery] = useState("");
-  const students = useMemo(() => examStudents(exam.classes), [exam.classes]);
-  const selected = exam.classes.find((room) => room.className === className) || null;
+  const [edits, setEdits] = useState<Record<string, ResultCorrection>>({});
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [cardKey, setCardKey] = useState<string | null>(null);
+  const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
+  const students = useMemo(() => examStudents(classes), [classes]);
+  const selected = classes.find((room) => room.className === className) || null;
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return students
@@ -35,13 +48,24 @@ export default function ResultsPage() {
       })
       .sort((a, b) => a.rank - b.rank || a.className.localeCompare(b.className) || Number(a.rollNo) - Number(b.rollNo));
   }, [students, className, query]);
+  const editing = students.find((student) => student.sheetKey === editingKey) || null;
+  const card = students.find((student) => student.sheetKey === cardKey) || null;
+
+  useEffect(() => {
+    setEdits(loadResultEdits());
+  }, []);
+
+  function writeEdits(next: Record<string, ResultCorrection>) {
+    setEdits(next);
+    saveResultEdits(next);
+  }
 
   return (
     <>
       <PageHead
         kicker="1st term 2026"
         title="Results"
-        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. The list runs from 1st downward. Tied percentages share a place. 1st is gold, 2nd silver, 3rd bronze."
+        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Open a certificate for one student, or correct a mark if the sheet has a mistake. The list runs from 1st downward."
         action={
           <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
             Open sheet
@@ -58,12 +82,12 @@ export default function ResultsPage() {
         />
         <select className="select" value={className} onChange={(event) => setClassName(event.target.value)} aria-label="Filter by class">
           <option value="">All classes</option>
-          {exam.classes.map((room) => (
+          {classes.map((room) => (
             <option key={room.className}>{room.className}</option>
           ))}
         </select>
         <button type="button" className="btn secondary" onClick={() => window.print()}>
-          Print
+          Print list
         </button>
       </div>
       {exam.loading ? <p className="opening">Opening the result sheet…</p> : null}
@@ -82,21 +106,21 @@ export default function ResultsPage() {
                 <th>Roll</th>
                 <th>Student</th>
                 {selected ? null : <th>Class</th>}
-                {selected
-                  ? selected.subjects.map((subject) => <th key={subject}>{subject}</th>)
-                  : null}
+                {selected ? selected.subjects.map((subject) => <th key={subject}>{subject}</th>) : null}
                 <th>Total</th>
                 <th>Position</th>
                 <th>%</th>
                 <th>Grade</th>
+                <th className="no-print"> </th>
               </tr>
             </thead>
             <tbody>
               {shown.map((student) => (
-                <tr key={`${student.className}-${student.rollNo}-${student.name}`} className={placeClass(student.rank)}>
+                <tr key={student.sheetKey} className={placeClass(student.rank)}>
                   <td className="num">{student.rollNo || "—"}</td>
                   <td>
                     <strong>{student.name}</strong>
+                    {edits[student.sheetKey] ? <span className="edited-tag">Edited</span> : null}
                   </td>
                   {selected ? null : <td>{student.className}</td>}
                   {selected
@@ -114,11 +138,53 @@ export default function ResultsPage() {
                   <td>
                     <Badge value={student.grade} />
                   </td>
+                  <td className="no-print">
+                    <div className="row-actions">
+                      <button type="button" className="text-btn" onClick={() => setCardKey(student.sheetKey)}>
+                        Card
+                      </button>
+                      <button type="button" className="text-btn" onClick={() => setEditingKey(student.sheetKey)}>
+                        Edit
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      ) : null}
+      {card ? (
+        <div className="card-stage">
+          <div className="card-stage-bar no-print">
+            <button type="button" className="btn" onClick={printCard}>
+              Print certificate
+            </button>
+            <button type="button" className="btn secondary" onClick={() => setCardKey(null)}>
+              Close
+            </button>
+          </div>
+          <ResultCard student={card} dateOfIssue={edits[card.sheetKey]?.dateOfIssue || ""} />
+        </div>
+      ) : null}
+      {editing ? (
+        <ResultEditor
+          key={editing.sheetKey}
+          student={editing}
+          dateOfIssue={edits[editing.sheetKey]?.dateOfIssue || ""}
+          edited={Boolean(edits[editing.sheetKey])}
+          onClose={() => setEditingKey(null)}
+          onSave={(correction) => {
+            writeEdits({ ...edits, [editing.sheetKey]: correction });
+            setEditingKey(null);
+          }}
+          onReset={() => {
+            const next = { ...edits };
+            delete next[editing.sheetKey];
+            writeEdits(next);
+            setEditingKey(null);
+          }}
+        />
       ) : null}
     </>
   );
