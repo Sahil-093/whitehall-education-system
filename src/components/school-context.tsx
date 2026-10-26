@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { changeRegister, loadRegister, restoreRegister } from "@/lib/browser-register";
 import { DEFAULT_SETTINGS } from "@/lib/format";
+import { loadOfficeBooks, publishRegisterChange } from "@/lib/office-adopt";
 import type { ListResource, Row, SchoolPayload, SchoolSettings } from "@/lib/types";
 
 type SchoolContextValue = SchoolPayload & {
@@ -37,6 +38,7 @@ export function SchoolProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
+    await loadOfficeBooks();
     setData(loadRegister());
   }, []);
 
@@ -49,15 +51,21 @@ export function SchoolProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const upsert = useCallback(async (resource: ListResource, records: Row[]) => {
-    setData(changeRegister({ resource, action: "upsert", records }));
+    const next = changeRegister({ resource, action: "upsert", records });
+    publishRegisterChange({ resource, action: "upsert", records });
+    setData(next);
   }, []);
 
   const remove = useCallback(async (resource: ListResource, ids: string[]) => {
-    setData(changeRegister({ resource, action: "delete", ids }));
+    const next = changeRegister({ resource, action: "delete", ids });
+    publishRegisterChange({ resource, action: "delete", ids });
+    setData(next);
   }, []);
 
   const saveSettings = useCallback(async (settings: SchoolSettings) => {
-    setData(changeRegister({ resource: "settings", action: "replace", settings }));
+    const next = changeRegister({ resource: "settings", action: "replace", settings });
+    publishRegisterChange({ resource: "settings", action: "replace", settings });
+    setData(next);
   }, []);
 
   const restore = useCallback(async (raw: string) => {

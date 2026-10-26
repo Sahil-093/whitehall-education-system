@@ -68,7 +68,7 @@ export default function FeesPage() {
       <PageHead
         kicker="Accounts"
         title="Fees"
-        lede="Create one slip per student for the month, then receive cash, bank, JazzCash, or EasyPaisa."
+        lede="Create one slip per student for the month, then receive cash, bank, JazzCash, or EasyPaisa. Slips are saved on the Fees sheet."
         action={
           <button type="button" className="btn secondary" onClick={() => window.print()}>
             Print

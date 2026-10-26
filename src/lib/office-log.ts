@@ -1,5 +1,6 @@
 import { readActor } from "./admin-auth";
 import { uid } from "./format";
+import { postOffice } from "./office-post";
 
 export type LogEntry = {
   id: string;
@@ -50,5 +51,10 @@ export function recordLog(action: string, detail: string) {
   };
   const entries = [next, ...loadLog()].slice(0, MAX_ENTRIES);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  postOffice("log", "upsert", [{ Id: next.id, When: next.at, By: next.actor, Step: next.action, Detail: next.detail }]);
   return next;
+}
+
+export function replaceLog(entries: LogEntry[]) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
 }

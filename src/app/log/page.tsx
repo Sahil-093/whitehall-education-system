@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSchool } from "@/components/school-context";
 import { Empty, PageHead } from "@/components/ui";
 import { formatWhen, loadLog, recordLog, type LogEntry } from "@/lib/office-log";
+import { loadOfficeBooks } from "@/lib/office-adopt";
 import { daysLeft, loadBin, takeBinItem, type BinItem } from "@/lib/recycle-bin";
 import { loadStudentStore, saveStudentStore, type AddedStudent } from "@/lib/student-roster";
 import type { Staff, Student } from "@/lib/types";
@@ -25,7 +26,14 @@ export default function LogPage() {
   }
 
   useEffect(() => {
-    refresh();
+    let alive = true;
+    void loadOfficeBooks().finally(() => {
+      if (!alive) return;
+      refresh();
+    });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   async function restore(id: string) {
@@ -51,7 +59,7 @@ export default function LogPage() {
       <PageHead
         kicker="Office"
         title="Log"
-        lede="Every sign-in, save, update, and removal is kept here. A removed record stays in the recycle bin for 14 days, then it is cleared."
+        lede="Every sign-in, save, update, and removal is written to the Log sheet. A removed record stays in the recycle bin for 14 days, then it is cleared."
       />
       {entries.length === 0 ? (
         <Empty title="No steps yet" text="Saves, edits, and removals will appear in this list." />

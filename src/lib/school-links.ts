@@ -47,3 +47,22 @@ export const STUDENT_SHEET_TOKEN = "wh-student-4c8e1b";
 export const STAFF_SHEET_ID = "1NO6subXMaR29fJORPBvKiW73j94_T_jMZybsd5tg9TY";
 export const STAFF_SHEET_GID = "0";
 export const STAFF_SHEET_URL = `https://docs.google.com/spreadsheets/d/${STAFF_SHEET_ID}/edit`;
+
+/** One workbook per remaining office section, in the same school Drive folder. */
+export const LOG_SHEET_ID = "1d1-faLPhDIO5_9gOeEexQ1vwTn6YEmE0KSW9VrZN-Y8";
+export const LOG_SHEET_URL = `https://docs.google.com/spreadsheets/d/${LOG_SHEET_ID}/edit`;
+export const SETTINGS_SHEET_ID = "1qUv-JEraNnD85rVYkI2LNmKC-sUZWIiD7tYSMo0_PGk";
+export const SETTINGS_SHEET_URL = `https://docs.google.com/spreadsheets/d/${SETTINGS_SHEET_ID}/edit`;
+export const FEES_SHEET_ID = "1SXAqRVZXqstvDf9zATjNIYC4YO_ACeXhKIDimZNtYBU";
+export const FEES_SHEET_URL = `https://docs.google.com/spreadsheets/d/${FEES_SHEET_ID}/edit`;
+export const ATTENDANCE_SHEET_ID = "1_sB4eTHjlII3yJT1w-HZ86OoroTfhoRY4rAVCoHw7rY";
+export const ATTENDANCE_SHEET_URL = ATTENDANCE_SHEET_ID
+  ? `https://docs.google.com/spreadsheets/d/${ATTENDANCE_SHEET_ID}/edit`
+  : "";
+export const RESULT_EDITS_SHEET_ID = "1lctcfaAz85VXeMwyzguQN4486IGHD1c79iYNURBUonk";
+export const RESULT_EDITS_SHEET_URL = `https://docs.google.com/spreadsheets/d/${RESULT_EDITS_SHEET_ID}/edit`;
+
+/** Apps Script web app that reads and writes the office sheets. */
+export const OFFICE_SYNC_URL =
+  "https://script.google.com/macros/s/AKfycbyEUSV_WZFbJ-JZ9M9w8r48ecdFAOxBELOd8Osbr21Hy-PtjSH2WAqPOYyaQUyZqe8o/exec";
+export const OFFICE_SHEET_TOKEN = "wh-office-6b2d4e";

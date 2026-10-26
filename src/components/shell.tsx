@@ -102,15 +102,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
             {normalize(pathname) === "/admission" ? (
               "This admission is saved on the Google Sheet. Papers stay in the school Drive folder. "
             ) : normalize(pathname) === "/results" || normalize(pathname) === "/students" || normalize(pathname) === "/classes" ? (
-              "Students, classes, and the result list are read from the 1st term result sheet. "
+              "Students, classes, and the result list are read from the school sheets. "
             ) : normalize(pathname) === "/staff" ? (
               <>
-                Staff sign in with the email and password saved on their record. Their sheet is the{" "}
+                The staff list is saved on the{" "}
                 <a href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
                   Staff
                 </a>{" "}
-                tab in Whitehall Education System.{" "}
+                sheet.{" "}
               </>
+            ) : normalize(pathname) === "/log" ? (
+              "The log and recycle bin are saved on the Log sheet. "
             ) : (
               "The register stays in this browser. It is not stored on GitHub. "
             )}

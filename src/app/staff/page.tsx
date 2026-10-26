@@ -50,7 +50,7 @@ export default function StaffPage() {
       <PageHead
         kicker="People"
         title="Staff"
-        lede="Teachers and office staff on the Karak campus. Each person signs in with the email and password saved here. Tick the sections that match their role."
+        lede="Teachers and office staff on the Karak campus. The list is saved on the Staff sheet, so every signed-in computer shows the same people. A login password stays on the computer where it was set."
         action={
           <>
             <a className="btn secondary" href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
@@ -144,7 +144,7 @@ function StaffDrawer({ initial, onClose }: { initial: Staff; onClose: () => void
       setError("Enter the staff email.");
       return;
     }
-    if (!password && !form.passwordHash) {
+    if (!initial.id && !password) {
       setError("Set a login password for this staff member.");
       return;
     }

@@ -7,9 +7,14 @@ import { backupRegister } from "@/lib/browser-register";
 import {
   ADMISSION_ACCOUNT,
   ADMISSION_SHEET_URL,
+  ATTENDANCE_SHEET_URL,
   DRIVE_FOLDER_URL,
   DRIVE_PHOTOS_URL,
+  FEES_SHEET_URL,
+  LOG_SHEET_URL,
   RESULTS_SHEET_URL,
+  RESULT_EDITS_SHEET_URL,
+  SETTINGS_SHEET_URL,
   STAFF_SHEET_URL,
   STUDENT_SHEET_URL,
 } from "@/lib/school-links";
@@ -46,7 +51,7 @@ export default function SettingsPage() {
       <PageHead
         kicker="Campus record"
         title="Settings"
-        lede="School details and a backup of the Karak register. The live site keeps records in this browser."
+        lede="School details are saved on the Settings sheet. A backup of this browser is still available below."
       />
       <div className="split">
         <form className="card stack" onSubmit={onSubmit}>
@@ -115,8 +120,42 @@ export default function SettingsPage() {
           <p>
             Staff sheet:{" "}
             <a href={STAFF_SHEET_URL} target="_blank" rel="noreferrer">
-              Whitehall Education System — Staff
+              Staff
             </a>
+          </p>
+          <p>
+            Log sheet:{" "}
+            <a href={LOG_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Log
+            </a>
+          </p>
+          <p>
+            Settings sheet:{" "}
+            <a href={SETTINGS_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Settings
+            </a>
+          </p>
+          <p>
+            Result corrections:{" "}
+            <a href={RESULT_EDITS_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Result corrections
+            </a>
+          </p>
+          <p>
+            Fees sheet:{" "}
+            <a href={FEES_SHEET_URL} target="_blank" rel="noreferrer">
+              Whitehall Fees
+            </a>
+            {ATTENDANCE_SHEET_URL ? (
+              <>
+                . Attendance sheet:{" "}
+                <a href={ATTENDANCE_SHEET_URL} target="_blank" rel="noreferrer">
+                  Whitehall Attendance
+                </a>
+              </>
+            ) : (
+              ". Attendance uses its own sheet in the school Drive folder."
+            )}
           </p>
           <div className="form-actions">
             <button

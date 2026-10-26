@@ -12,7 +12,7 @@ export default function ClassesPage() {
       <PageHead
         kicker="1st term 2026"
         title="Classes"
-        lede="These classes are the tabs of the 1st term result sheet, from Pre-Nursery through 7th."
+        lede="These classes are the tabs of the 1st term result sheet, from Pre-Nursery through 7th. That workbook is the Classes sheet."
         action={
           <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
             Open sheet

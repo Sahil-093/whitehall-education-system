@@ -209,7 +209,6 @@ function apply(db: Database, body: SaveBody) {
       if (email === ADMIN_EMAIL) throw new Error("That email belongs to the school office.");
       if (seen.has(email)) throw new Error("That email is already used by another staff member.");
       seen.add(email);
-      if (!row.passwordHash) throw new Error("Set a password for this staff login.");
     }
   }
 
@@ -241,6 +240,30 @@ export function activeStaffHash(email: string) {
 
 export function loadRegister() {
   return toPayload(readDatabase());
+}
+
+/** Replaces office lists with rows from the section sheets, keeping a password saved on this computer. */
+export function adoptOfficeLists(input: {
+  staff?: Row[];
+  fees?: Row[];
+  attendance?: Row[];
+  settings?: Partial<SchoolSettings> | null;
+}) {
+  const db = readDatabase();
+  if (input.staff && input.staff.length) {
+    const byEmail = new Map(db.staff.map((row) => [String(row.email || "").toLowerCase(), row]));
+    const byId = new Map(db.staff.map((row) => [row.id, row]));
+    db.staff = input.staff.map((row) => {
+      const clean = sanitize("staff", row);
+      const previous = byEmail.get(String(clean.email || "").toLowerCase()) || byId.get(clean.id);
+      if (previous?.passwordHash && !clean.passwordHash) clean.passwordHash = String(previous.passwordHash);
+      return clean;
+    });
+  }
+  if (input.fees && input.fees.length) db.fees = input.fees.map((row) => sanitize("fees", row));
+  if (input.attendance && input.attendance.length) db.attendance = input.attendance.map((row) => sanitize("attendance", row));
+  if (input.settings?.schoolName) db.settings = settingsFrom(input.settings);
+  writeDatabase(db);
 }
 
 export function changeRegister(body: SaveBody) {

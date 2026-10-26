@@ -81,7 +81,7 @@ export default function AttendancePage() {
       <PageHead
         kicker="Daily register"
         title="Attendance"
-        lede="Unmarked students are saved as present. Change the ones who are absent or on leave, then save the class."
+        lede="Unmarked students are saved as present. Change the ones who are absent or on leave, then save the class. The marks are stored on the Attendance sheet."
         action={
           <button type="button" className="btn secondary" onClick={() => window.print()}>
             Print

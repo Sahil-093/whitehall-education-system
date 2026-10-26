@@ -7,9 +7,10 @@ import { useExamSheet } from "@/components/use-exam-sheet";
 import { useSharedStudents } from "@/components/use-shared-students";
 import { applyResultCorrections, examStudents, type ExamStudent, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
+import { loadOfficeBooks } from "@/lib/office-adopt";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
 import { recordLog } from "@/lib/office-log";
-import { EXAM_SHEET_URL } from "@/lib/school-links";
+import { EXAM_SHEET_URL, RESULT_EDITS_SHEET_URL } from "@/lib/school-links";
 import { emptyStudentStore, loadStudentStore, officeRows, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
 
 function shownMark(value: string) {
@@ -90,6 +91,7 @@ export default function ResultsPage() {
   useEffect(() => {
     setEdits(loadResultEdits());
     setRoster(loadStudentStore());
+    void loadOfficeBooks().then(() => setEdits(loadResultEdits()));
   }, []);
 
   useEffect(() => {
@@ -141,11 +143,16 @@ export default function ResultsPage() {
       <PageHead
         kicker="1st term 2026"
         title="Results"
-        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Refresh loads the latest sheet and, once the sheet can be updated from here, writes saved corrections back into it."
+        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Marks stay on the result sheet. A correction saved here is kept on the Result corrections sheet and shows for every signed-in computer."
         action={
-          <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
-            Open sheet
-          </a>
+          <>
+            <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">
+              Open sheet
+            </a>
+            <a className="btn secondary" href={RESULT_EDITS_SHEET_URL} target="_blank" rel="noreferrer">
+              Corrections
+            </a>
+          </>
         }
       />
       <div className="filters no-print">
