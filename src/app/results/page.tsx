@@ -7,9 +7,8 @@ import { useExamSheet } from "@/components/use-exam-sheet";
 import { applyResultCorrections, examStudents, type ExamStudent, type ResultCorrection } from "@/lib/exam-sheet";
 import { loadResultEdits, saveResultEdits } from "@/lib/result-edits";
 import { editsAfterSync, postResultSync } from "@/lib/result-sync";
-import { schoolNumbers } from "@/lib/school-numbers";
 import { EXAM_SHEET_URL } from "@/lib/school-links";
-import { applyStudentForm, emptyStudentStore, loadStudentStore, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
+import { emptyStudentStore, loadStudentStore, rosterRows, STUDENT_CLASSES, type StudentStore } from "@/lib/student-roster";
 
 function shownMark(value: string) {
   if (!value) return "—";
@@ -49,10 +48,23 @@ export default function ResultsPage() {
   const [roster, setRoster] = useState<StudentStore>(emptyStudentStore);
   const classes = useMemo(() => applyResultCorrections(exam.classes, edits), [exam.classes, edits]);
   const students = useMemo(() => examStudents(classes), [classes]);
-  const numbers = useMemo(() => schoolNumbers(students), [students]);
+  const rosterList = useMemo(() => rosterRows(examStudents(exam.classes), roster), [exam.classes, roster]);
+  const rosterById = useMemo(() => new Map(rosterList.map((row) => [row.id, row])), [rosterList]);
   const presented = useMemo(
-    () => students.map((student) => applyStudentForm(student, roster, numbers.get(student.sheetKey))),
-    [students, roster, numbers],
+    () =>
+      students.map((student) => {
+        const row = rosterById.get(student.sheetKey);
+        if (!row) return student;
+        return {
+          ...student,
+          name: row.edited ? row.name : student.name,
+          fatherName: row.fatherName || student.fatherName,
+          className: row.edited ? row.className : student.className,
+          rollNo: row.rollNo,
+          registrationNo: row.registrationNo || student.registrationNo,
+        };
+      }),
+    [students, rosterById],
   );
   const selected = classes.find((room) => room.className === className) || null;
   const shown = useMemo(() => {
