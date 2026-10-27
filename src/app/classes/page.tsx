@@ -37,11 +37,11 @@ export default function ClassesPage() {
             <tbody>
               {exam.classes.map((room) => (
                 <tr key={room.className}>
-                  <td>
+                  <td data-label="Class">
                     <strong>{room.className}</strong>
                   </td>
-                  <td className="num">{room.students.length}</td>
-                  <td>{room.subjects.join(", ") || "—"}</td>
+                  <td className="num" data-label="Students">{room.students.length}</td>
+                  <td data-label="Subjects">{room.subjects.join(", ") || "—"}</td>
                 </tr>
               ))}
             </tbody>

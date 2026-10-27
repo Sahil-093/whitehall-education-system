@@ -217,25 +217,25 @@ export default function ResultsPage() {
             <tbody>
               {shown.map((student) => (
                 <tr key={student.sheetKey} className={placeClass(student.rank)}>
-                  <td className="num">{student.rollNo || "—"}</td>
-                  <td>
+                  <td className="num" data-label="Roll">{student.rollNo || "—"}</td>
+                  <td data-label="Student">
                     <strong>{student.name}</strong>
                     {edits[student.sheetKey] ? <span className="edited-tag">Edited</span> : null}
                   </td>
-                  {selected ? null : <td>{student.className}</td>}
+                  {selected ? null : <td data-label="Class">{student.className}</td>}
                   {selected
                     ? selected.subjects.map((subject) => (
-                        <td className="num" key={subject}>
+                        <td className="num" data-label={subject} key={subject}>
                           {shownMark(student.marks.find((item) => item.subject === subject)?.value || "")}
                         </td>
                       ))
                     : null}
-                  <td className="num">{shownMark(student.total)}</td>
-                  <td>
+                  <td className="num" data-label="Total">{shownMark(student.total)}</td>
+                  <td data-label="Position">
                     <span className={`place ${placeClass(student.rank)}`}>{student.position}</span>
                   </td>
-                  <td className="num">{student.percentage}</td>
-                  <td>
+                  <td className="num" data-label="%">{student.percentage}</td>
+                  <td data-label="Grade">
                     <Badge value={student.grade} />
                   </td>
                   <td className="no-print">

@@ -77,10 +77,10 @@ export default function LogPage() {
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id}>
-                  <td>{formatWhen(entry.at, true)}</td>
-                  <td>{entry.actor}</td>
-                  <td>{entry.action}</td>
-                  <td>{entry.detail || "—"}</td>
+                  <td data-label="When">{formatWhen(entry.at, true)}</td>
+                  <td data-label="By">{entry.actor}</td>
+                  <td data-label="Step">{entry.action}</td>
+                  <td data-label="Detail">{entry.detail || "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -108,14 +108,14 @@ export default function LogPage() {
             <tbody>
               {bin.map((item) => (
                 <tr key={item.id}>
-                  <td>
+                  <td data-label="Name">
                     <strong>{item.name}</strong>
                     {item.detail ? <div>{item.detail}</div> : null}
                   </td>
-                  <td>{KIND_LABEL[item.kind]}</td>
-                  <td>{item.removedBy}</td>
-                  <td>{formatWhen(item.removedAt, true)}</td>
-                  <td className="num">{daysLeft(item.removedAt)}</td>
+                  <td data-label="Record">{KIND_LABEL[item.kind]}</td>
+                  <td data-label="Removed by">{item.removedBy}</td>
+                  <td data-label="Removed">{formatWhen(item.removedAt, true)}</td>
+                  <td className="num" data-label="Days left">{daysLeft(item.removedAt)}</td>
                   <td className="no-print">
                     <button type="button" className="text-btn" onClick={() => void restore(item.id)}>
                       Restore

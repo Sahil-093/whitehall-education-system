@@ -45,10 +45,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const school = useSchool();
   const logout = useAdminLogout();
   const [actorEmail, setActorEmail] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     setActorEmail(readActor().email);
     purgeBin();
   }, []);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
   const { settings } = school;
   const areas = actorEmail == null ? "all" : areasForStaff(actorEmail, school.staff);
   const links = LINKS.filter(([href]) => linkAllowed(href, areas));
@@ -59,7 +63,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <aside className={menuOpen ? "sidebar menu-open" : "sidebar"}>
         <div className="brand">
           <div className="brand-mark">
             <img src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/logo.png`} alt="" />
@@ -70,8 +74,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {settings.campus}, {settings.province}
             </span>
           </div>
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-expanded={menuOpen}
+            aria-controls="office-nav"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? "Close" : "Menu"}
+          </button>
         </div>
-        <nav className="nav" aria-label="Register">
+        <nav id="office-nav" className="nav" aria-label="Register">
           {links.map(([href, label]) => (
             <Link
               key={href}

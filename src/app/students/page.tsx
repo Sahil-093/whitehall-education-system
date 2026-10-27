@@ -267,14 +267,14 @@ export default function StudentsPage() {
             <tbody>
               {roll.map((student) => (
                 <tr key={student.id}>
-                  <td className="num">{student.rollNo || "—"}</td>
-                  <td className="num">{student.registrationNo || "—"}</td>
-                  <td>
+                  <td className="num" data-label="Roll">{student.rollNo || "—"}</td>
+                  <td className="num" data-label="Registration">{student.registrationNo || "—"}</td>
+                  <td data-label="Student">
                     <strong>{student.name}</strong>
                     {student.fatherName ? <div>{student.fatherName}</div> : null}
                     {auditLine(student)}
                   </td>
-                  <td>{student.className}</td>
+                  <td data-label="Class">{student.className}</td>
                   <td className="no-print">
                     <button type="button" className="text-btn" onClick={() => setDraft({ row: student, edit: false })}>
                       View
@@ -336,16 +336,16 @@ export default function StudentsPage() {
             <tbody>
               {shown.map((student) => (
                 <tr key={student.id}>
-                  <td className="num">{student.admissionNo}</td>
-                  <td>
+                  <td className="num" data-label="Adm no">{student.admissionNo}</td>
+                  <td data-label="Student">
                     <strong>{student.name}</strong>
                     <div>{student.gender || "—"}</div>
                   </td>
-                  <td>{student.fatherName}</td>
-                  <td>{classLabel(student.className, student.section)}</td>
-                  <td>{student.phone || "—"}</td>
-                  <td className="num">{money(student.monthlyFee)}</td>
-                  <td>
+                  <td data-label="Father">{student.fatherName}</td>
+                  <td data-label="Class">{classLabel(student.className, student.section)}</td>
+                  <td data-label="Phone">{student.phone || "—"}</td>
+                  <td className="num" data-label="Monthly fee">{money(student.monthlyFee)}</td>
+                  <td data-label="Status">
                     <Badge value={student.status} />
                   </td>
                   <td className="no-print">

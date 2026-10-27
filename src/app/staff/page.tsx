@@ -82,19 +82,19 @@ export default function StaffPage() {
             <tbody>
               {people.map((person) => (
                 <tr key={person.id}>
-                  <td>
+                  <td data-label="Name">
                     <strong>{person.name}</strong>
                     <div>{person.qualification || "—"}</div>
                   </td>
-                  <td>
+                  <td data-label="Role">
                     {person.designation}
                     <div className="access-picks">{checklistLine(person.access)}</div>
                   </td>
-                  <td>{person.subject || "—"}</td>
-                  <td>{person.email || "—"}</td>
-                  <td>{person.phone || "—"}</td>
-                  <td className="num">{person.salary ? money(person.salary) : "—"}</td>
-                  <td>
+                  <td data-label="Subject">{person.subject || "—"}</td>
+                  <td data-label="Email">{person.email || "—"}</td>
+                  <td data-label="Phone">{person.phone || "—"}</td>
+                  <td className="num" data-label="Salary">{person.salary ? money(person.salary) : "—"}</td>
+                  <td data-label="Status">
                     <Badge value={person.status} />
                   </td>
                   <td className="no-print">

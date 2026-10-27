@@ -123,12 +123,12 @@ export default function AttendancePage() {
                 <tbody>
                   {roster.map((student) => (
                     <tr key={student.id}>
-                      <td className="num">{student.admissionNo}</td>
-                      <td>
+                      <td className="num" data-label="Adm no">{student.admissionNo}</td>
+                      <td data-label="Student">
                         <strong>{student.name}</strong>
                         <div>{student.fatherName}</div>
                       </td>
-                      <td>
+                      <td data-label="Mark">
                         <div className="mark" role="group" aria-label={`Attendance for ${student.name}`}>
                           {MARKS.map((status) => (
                             <button

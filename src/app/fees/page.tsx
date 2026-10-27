@@ -128,15 +128,15 @@ export default function FeesPage() {
             <tbody>
               {slips.map((fee) => (
                 <tr key={fee.id}>
-                  <td className="num">{fee.admissionNo}</td>
-                  <td>
+                  <td className="num" data-label="Adm no">{fee.admissionNo}</td>
+                  <td data-label="Student">
                     <strong>{fee.studentName}</strong>
                     <div>{fee.receiptNo || "No receipt yet"}</div>
                   </td>
-                  <td>{classLabel(fee.className, fee.section)}</td>
-                  <td className="num">{money(fee.amount)}</td>
-                  <td className="num">{money(fee.paidAmount)}</td>
-                  <td>
+                  <td data-label="Class">{classLabel(fee.className, fee.section)}</td>
+                  <td className="num" data-label="Fee">{money(fee.amount)}</td>
+                  <td className="num" data-label="Paid">{money(fee.paidAmount)}</td>
+                  <td data-label="Status">
                     <Badge value={fee.status} />
                   </td>
                   <td className="no-print">
