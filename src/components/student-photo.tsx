@@ -74,19 +74,26 @@ export function StudentPhoto({
       cameraRef.current?.click();
       return;
     }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-      streamRef.current = stream;
-      setLive(true);
-    } catch {
+    const requests = [
+      { video: { facingMode: { exact: "environment" } }, audio: false },
+      { video: { facingMode: "environment" }, audio: false },
+    ];
+    for (const constraints of requests) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const facing = stream.getVideoTracks()[0]?.getSettings().facingMode;
+        if (facing === "user") {
+          stream.getTracks().forEach((track) => track.stop());
+          continue;
+        }
         streamRef.current = stream;
         setLive(true);
+        return;
       } catch {
-        cameraRef.current?.click();
+        // The next request tries the rear camera another way.
       }
     }
+    cameraRef.current?.click();
   }
 
   function capture() {
@@ -148,7 +155,7 @@ export function StudentPhoto({
             ref={cameraRef}
             type="file"
             accept="image/*"
-            capture="user"
+            capture="environment"
             hidden
             onChange={(event) => {
               const file = event.target.files?.[0];
