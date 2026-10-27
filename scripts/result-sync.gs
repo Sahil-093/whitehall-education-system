@@ -1,4 +1,4 @@
-/** Bound to "1st Term Exam - Result 2026". Deploy as a web app: execute as me, anyone. */
+/** Not deployed. The office web app in scripts/office-sheets.gs writes these cells. */
 function doGet() {
   return ContentService.createTextOutput("ok");
 }

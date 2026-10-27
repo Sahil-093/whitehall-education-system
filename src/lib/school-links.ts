@@ -30,10 +30,7 @@ export const EXAM_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1AaPJW2upNFvO9i-qdxZuiMbe_FHwagP6eg8vaKN3QO4/edit?gid=1288827159#gid=1288827159";
 export const RESULTS_SHEET_URL = EXAM_SHEET_URL;
 
-/**
- * Apps Script web app that writes result corrections back into the class tabs.
- * Empty until the sheet owner deploys the script in scripts/result-sync.gs.
- */
+/** Unused. Result marks are written by the office web app into the class tabs. */
 export const RESULT_SYNC_URL = "";
 
 /** Student details for the Students section. Inside the school Drive folder. */

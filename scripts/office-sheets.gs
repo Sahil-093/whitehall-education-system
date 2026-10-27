@@ -7,6 +7,7 @@ var SETTINGS_ID = "1qUv-JEraNnD85rVYkI2LNmKC-sUZWIiD7tYSMo0_PGk";
 var FEES_ID = "1SXAqRVZXqstvDf9zATjNIYC4YO_ACeXhKIDimZNtYBU";
 var CORRECTIONS_ID = "1lctcfaAz85VXeMwyzguQN4486IGHD1c79iYNURBUonk";
 var ATTENDANCE_ID = "1_sB4eTHjlII3yJT1w-HZ86OoroTfhoRY4rAVCoHw7rY";
+var EXAM_ID = "1AaPJW2upNFvO9i-qdxZuiMbe_FHwagP6eg8vaKN3QO4";
 
 var RECYCLE_HEADERS = ["Id", "Kind", "Name", "Detail", "Removed at", "Removed by", "Payload"];
 var ATTEND_HEADERS = ["Id", "Date", "Student id", "Admission no", "Student name", "Class", "Section", "Status"];
@@ -40,6 +41,10 @@ function doPost(e) {
   try { data = JSON.parse(raw); } catch (err) { return ContentService.createTextOutput("bad"); }
   if (data.token !== TOKEN) return ContentService.createTextOutput("no");
   var book = String(data.book || "");
+  if (book === "result") {
+    writeResultCells(data.rows || []);
+    return ContentService.createTextOutput("ok");
+  }
   var sheet = sheetFor(book);
   if (!sheet) return ContentService.createTextOutput("book");
   var action = String(data.action || "upsert");
@@ -184,4 +189,77 @@ function removeIds(sheet, keyName, ids) {
 function clearRows(sheet) {
   var last = sheet.getLastRow();
   if (last > 1) sheet.getRange(2, 1, last - 1, Math.max(sheet.getLastColumn(), 1)).clearContent();
+}
+
+function writeResultCells(rows) {
+  var book = SpreadsheetApp.openById(EXAM_ID);
+  var byTab = {};
+  for (var i = 0; i < rows.length; i++) {
+    var tab = String(rows[i].tab || "");
+    if (!tab) continue;
+    if (!byTab[tab]) byTab[tab] = [];
+    byTab[tab].push(rows[i]);
+  }
+  for (var name in byTab) {
+    if (!Object.prototype.hasOwnProperty.call(byTab, name)) continue;
+    var sheet = book.getSheetByName(name);
+    if (sheet) writeClassCells(sheet, byTab[name]);
+  }
+}
+
+function writeClassCells(sheet, students) {
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+  if (lastRow < 2 || lastCol < 1) return;
+  var grid = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  var headerIndex = -1;
+  for (var r = 0; r < Math.min(grid.length, 8); r++) {
+    for (var c = 0; c < grid[r].length; c++) {
+      if (String(grid[r][c]).trim().toLowerCase() === "roll no") headerIndex = r;
+    }
+    if (headerIndex >= 0) break;
+  }
+  if (headerIndex < 0) return;
+  var headers = grid[headerIndex].map(function (cell) {
+    return String(cell).trim();
+  });
+  var rollCol = headers.findIndex(function (label) {
+    return label.toLowerCase() === "roll no";
+  });
+  var nameCol = headers.findIndex(function (label) {
+    return /student name/i.test(label);
+  });
+  if (rollCol < 0 || nameCol < 0) return;
+
+  students.forEach(function (student) {
+    var row = -1;
+    for (var i = headerIndex + 1; i < grid.length; i++) {
+      var roll = String(grid[i][rollCol] == null ? "" : grid[i][rollCol]).trim();
+      var name = String(grid[i][nameCol] == null ? "" : grid[i][nameCol]).trim();
+      if (roll === String(student.matchRoll || "").trim() && name.toLowerCase() === String(student.matchName || "").trim().toLowerCase()) {
+        row = i;
+        break;
+      }
+    }
+    if (row < 0) return;
+    if (student.name) sheet.getRange(row + 1, nameCol + 1).setValue(String(student.name));
+    var marks = student.marks || {};
+    Object.keys(marks).forEach(function (subject) {
+      var col = headers.findIndex(function (label) {
+        return label.toLowerCase() === String(subject).trim().toLowerCase();
+      });
+      if (col < 0) return;
+      var header = headers[col];
+      if (/^total$/i.test(header) || /^percentage$/i.test(header) || /^positions?$/i.test(header)) return;
+      sheet.getRange(row + 1, col + 1).setValue(resultCell(marks[subject]));
+    });
+  });
+}
+
+function resultCell(value) {
+  var text = String(value == null ? "" : value).trim();
+  if (!text) return "";
+  if (/^absent$/i.test(text)) return "Absent";
+  var number = Number(text);
+  return isFinite(number) ? number : text;
 }

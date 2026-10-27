@@ -234,7 +234,7 @@ export function ResultEditor({
     <Drawer title={`Edit ${student.name}`} onClose={onClose}>
       <form onSubmit={onSubmit}>
         <p className="edit-note">
-          {student.className}. Save updates this list and the certificate. Refresh writes the correction into the result sheet, then loads the sheet again. Father&apos;s name and registration stay on this computer.
+          {student.className}. Save writes the name and each mark into the same cell on the result sheet. Total and percentage stay as formulas. Father&apos;s name and registration stay on this computer.
         </p>
         <div className="form-grid">
           <Field label="Student name">

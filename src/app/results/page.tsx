@@ -95,6 +95,11 @@ export default function ResultsPage() {
   }, []);
 
   useEffect(() => {
+    if (!exam.classes.length || Object.keys(edits).length === 0) return;
+    postResultSync(exam.classes, edits);
+  }, [exam.classes, edits]);
+
+  useEffect(() => {
     if (!batch) return;
     const timer = window.setTimeout(() => {
       document.body.classList.add("printing-card");
@@ -143,7 +148,7 @@ export default function ResultsPage() {
       <PageHead
         kicker="1st term 2026"
         title="Results"
-        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. Marks stay on the result sheet. A correction saved here is kept on the Result corrections sheet and shows for every signed-in computer."
+        lede="Every student gets a percentage from the class total, then a grade and a position from that percentage. A saved correction is written into the same cell on the result sheet, so every signed-in computer sees that mark."
         action={
           <>
             <a className="btn secondary" href={EXAM_SHEET_URL} target="_blank" rel="noreferrer">

@@ -1,8 +1,8 @@
 import type { ExamClass, ResultCorrection } from "./exam-sheet";
-import { RESULT_SYNC_URL } from "./school-links";
+import { postOffice } from "./office-post";
 
 export function resultSyncReady() {
-  return Boolean(RESULT_SYNC_URL);
+  return true;
 }
 
 function sameMark(sheetValue: string, edited: string) {
@@ -15,55 +15,24 @@ function sameMark(sheetValue: string, edited: string) {
 }
 
 export function postResultSync(classes: ExamClass[], edits: Record<string, ResultCorrection>) {
-  if (!RESULT_SYNC_URL) return false;
-  const payload = {
-    classes: classes
-      .filter((room) => room.students.some((student) => edits[student.sheetKey]))
-      .map((room) => ({
-        tab: room.tab,
-        students: room.students.map((student) => {
-          const [rollNo = "", name = ""] = student.sheetKey.split("\u001f").slice(1);
-          const edit = edits[student.sheetKey];
-          return {
-            matchRoll: rollNo,
-            matchName: name,
-            position: student.position,
-            ...(edit
-              ? {
-                  rollNo: student.rollNo,
-                  name: student.name,
-                  marks: Object.fromEntries(student.marks.map((mark) => [mark.subject, mark.value])),
-                }
-              : {}),
-          };
-        }),
-      })),
-  };
-  if (payload.classes.length === 0) return false;
-
-  const frameName = "whitehall-result-sync";
-  let frame = document.getElementById(frameName) as HTMLIFrameElement | null;
-  if (!frame) {
-    frame = document.createElement("iframe");
-    frame.id = frameName;
-    frame.name = frameName;
-    frame.hidden = true;
-    frame.title = "Result sheet";
-    document.body.appendChild(frame);
-  }
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = RESULT_SYNC_URL;
-  form.target = frameName;
-  form.acceptCharset = "UTF-8";
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "payload";
-  input.value = JSON.stringify(payload);
-  form.appendChild(input);
-  document.body.appendChild(form);
-  form.submit();
-  form.remove();
+  const rows = classes.flatMap((room) =>
+    room.students.flatMap((student) => {
+      const edit = edits[student.sheetKey];
+      if (!edit) return [];
+      const [, rollNo = "", name = ""] = student.sheetKey.split("\u001f");
+      return [
+        {
+          tab: room.tab,
+          matchRoll: rollNo,
+          matchName: name,
+          name: edit.name,
+          marks: edit.marks,
+        },
+      ];
+    }),
+  );
+  if (rows.length === 0) return false;
+  postOffice("result", "cells", rows);
   return true;
 }
 

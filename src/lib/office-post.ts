@@ -27,8 +27,8 @@ function rows(value: unknown) {
 
 export function postOffice(
   book: string,
-  action: "upsert" | "delete" | "replace",
-  officeRows: Record<string, string>[] = [],
+  action: "upsert" | "delete" | "replace" | "cells",
+  officeRows: unknown[] = [],
   ids: string[] = [],
 ) {
   if (!OFFICE_SYNC_URL || typeof document === "undefined") return;
